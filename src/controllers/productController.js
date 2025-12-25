@@ -1,14 +1,20 @@
-// Product Controller
-// Product সংক্রান্ত সব operations
+/**
+ * ═══════════════════════════════════════════════════════════════
+ * PRODUCT CONTROLLER - ENTERPRISE VERSION
+ * ═══════════════════════════════════════════════════════════════
+ * 
+ * Features:
+ * ✅ Product image upload with auto-delete old image
+ * ✅ Automatic compression
+ * ✅ Separate Cloudinary folder
+ */
 
 const { Product } = require('../models');
+const { uploadSingleImage, updateImage, deleteImage } = require('../utils/uploadUtils');
 
-// ✅ এই লাইন ঠিক করা হয়েছে - uploadImage এর জায়গায় uploadSingleImage
-const { uploadSingleImage } = require('../utils/uploadUtils');
-
-// =============================================
-// GET ALL PRODUCTS - সব products list
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// GET ALL PRODUCTS
+// ═══════════════════════════════════════════════════════════════
 const getAllProducts = async (req, res) => {
   try {
     const {
@@ -56,9 +62,9 @@ const getAllProducts = async (req, res) => {
   }
 };
 
-// =============================================
-// GET PRODUCT BY ID - একটি product details
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// GET PRODUCT BY ID
+// ═══════════════════════════════════════════════════════════════
 const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -88,9 +94,9 @@ const getProductById = async (req, res) => {
   }
 };
 
-// =============================================
-// CREATE PRODUCT - নতুন product তৈরি (Admin only)
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// CREATE PRODUCT (WITH IMAGE UPLOAD)
+// ═══════════════════════════════════════════════════════════════
 const createProduct = async (req, res) => {
   try {
     const {
@@ -102,7 +108,7 @@ const createProduct = async (req, res) => {
       is_available
     } = req.body;
 
-    // Input validation
+    // Validation
     if (!product_name || !category || !base_price) {
       return res.status(400).json({
         success: false,
@@ -110,7 +116,6 @@ const createProduct = async (req, res) => {
       });
     }
 
-    // Price validation
     if (base_price < 0) {
       return res.status(400).json({
         success: false,
@@ -118,12 +123,17 @@ const createProduct = async (req, res) => {
       });
     }
 
-    // ✅ Image upload (যদি থাকে) - uploadSingleImage ব্যবহার করা হয়েছে
+    // ✅ Image upload (যদি থাকে)
     let imageUrl = null;
     if (req.file) {
-      // Cloudinary তে upload করা - নতুন uploadSingleImage function ব্যবহার করছি
-      const uploadResult = await uploadSingleImage(req.file.buffer, 'product');
-      imageUrl = uploadResult.url; // secure_url এর জায়গায় url
+      // Product তৈরি করার আগে temporary ID use করা
+      const tempId = `temp_${Date.now()}`;
+      const uploadResult = await uploadSingleImage(
+        req.file.buffer,
+        'product',
+        tempId
+      );
+      imageUrl = uploadResult.url;
     }
 
     // Product তৈরি করা
@@ -153,14 +163,14 @@ const createProduct = async (req, res) => {
   }
 };
 
-// =============================================
-// UPDATE PRODUCT - Product update করা (Admin only)
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// UPDATE PRODUCT (WITH AUTO-DELETE OLD IMAGE)
+// ═══════════════════════════════════════════════════════════════
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Product exist করে কিনা check করা
+    // Product exist করে কিনা check
     const existingProduct = await Product.findById(id);
     if (!existingProduct) {
       return res.status(404).json({
@@ -169,10 +179,15 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    // ✅ Image upload (যদি নতুন ছবি থাকে) - uploadSingleImage ব্যবহার করা হয়েছে
+    // ✅ নতুন image থাকলে auto-delete করে upload করা
     if (req.file) {
-      const uploadResult = await uploadSingleImage(req.file.buffer, 'product');
-      req.body.image_url = uploadResult.url; // secure_url এর জায়গায় url
+      const uploadResult = await updateImage(
+        existingProduct.image_url,  // পুরাতন image URL
+        req.file.buffer,             // নতুন file buffer
+        'product',                   // Upload type
+        id                           // Product ID
+      );
+      req.body.image_url = uploadResult.url;
     }
 
     // Product update করা
@@ -194,21 +209,34 @@ const updateProduct = async (req, res) => {
   }
 };
 
-// =============================================
-// DELETE PRODUCT - Product মুছে ফেলা (Admin only)
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// DELETE PRODUCT (WITH IMAGE DELETE)
+// ═══════════════════════════════════════════════════════════════
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deletedProduct = await Product.delete(id);
-
-    if (!deletedProduct) {
+    // Product খুঁজে বের করা
+    const product = await Product.findById(id);
+    if (!product) {
       return res.status(404).json({
         success: false,
         message: 'Product পাওয়া যায়নি'
       });
     }
+
+    // Image থাকলে Cloudinary থেকে delete করা
+    if (product.image_url) {
+      try {
+        await deleteImage(product.image_url);
+        console.log('✅ Product image deleted from Cloudinary');
+      } catch (error) {
+        console.warn('⚠️  Failed to delete image:', error.message);
+      }
+    }
+
+    // Database থেকে delete করা
+    const deletedProduct = await Product.delete(id);
 
     return res.status(200).json({
       success: true,
@@ -226,9 +254,9 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-// =============================================
-// GET PRODUCTS BY CATEGORY - Category অনুযায়ী products
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// GET PRODUCTS BY CATEGORY
+// ═══════════════════════════════════════════════════════════════
 const getProductsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
@@ -251,9 +279,9 @@ const getProductsByCategory = async (req, res) => {
   }
 };
 
-// =============================================
-// SEARCH PRODUCTS - Product search করা
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// SEARCH PRODUCTS
+// ═══════════════════════════════════════════════════════════════
 const searchProducts = async (req, res) => {
   try {
     const { q } = req.query;
@@ -287,9 +315,9 @@ const searchProducts = async (req, res) => {
   }
 };
 
-// =============================================
-// TOGGLE AVAILABILITY - Availability toggle করা (Admin only)
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// TOGGLE AVAILABILITY
+// ═══════════════════════════════════════════════════════════════
 const toggleAvailability = async (req, res) => {
   try {
     const { id } = req.params;
@@ -327,9 +355,9 @@ const toggleAvailability = async (req, res) => {
   }
 };
 
-// =============================================
-// GET POPULAR PRODUCTS - জনপ্রিয় products
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// GET POPULAR PRODUCTS
+// ═══════════════════════════════════════════════════════════════
 const getPopularProducts = async (req, res) => {
   try {
     const { limit = 10 } = req.query;
@@ -352,9 +380,9 @@ const getPopularProducts = async (req, res) => {
   }
 };
 
-// =============================================
-// GET PRODUCT STATISTICS - Product statistics (Admin only)
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// GET PRODUCT STATISTICS
+// ═══════════════════════════════════════════════════════════════
 const getProductStatistics = async (req, res) => {
   try {
     const statistics = await Product.getStatistics();

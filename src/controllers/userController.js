@@ -1,17 +1,24 @@
-// User Controller
-// User সংক্রান্ত সব operations
+/**
+ * ═══════════════════════════════════════════════════════════════
+ * USER CONTROLLER - ENTERPRISE VERSION
+ * ═══════════════════════════════════════════════════════════════
+ * 
+ * Features:
+ * ✅ Profile picture upload with auto-delete old image
+ * ✅ Automatic compression
+ * ✅ Error handling
+ */
 
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
-const { uploadSingleImage, deleteImage } = require('../utils/uploadUtils');
+const { uploadSingleImage, updateImage, deleteImage } = require('../utils/uploadUtils');
 
-// =============================================
-// GET PROFILE - নিজের profile দেখা
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// GET PROFILE
+// ═══════════════════════════════════════════════════════════════
 const getProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-
     const user = await User.findById(userId);
 
     if (!user) {
@@ -21,7 +28,7 @@ const getProfile = async (req, res) => {
       });
     }
 
-    // Password বাদ দিয়ে response পাঠানো
+    // Password বাদ দিয়ে response
     const { password, ...userWithoutPassword } = user;
 
     return res.status(200).json({
@@ -40,12 +47,11 @@ const getProfile = async (req, res) => {
   }
 };
 
-// =============================================
-// UPDATE PROFILE - Profile update করা
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// UPDATE PROFILE
+// ═══════════════════════════════════════════════════════════════
 const updateProfile = async (req, res) => {
   try {
-    // Validation check
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -58,7 +64,6 @@ const updateProfile = async (req, res) => {
     const userId = req.user.id;
     const { full_name, phone, email } = req.body;
 
-    // Input validation
     if (!full_name && !phone && !email) {
       return res.status(400).json({
         success: false,
@@ -66,7 +71,7 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    // Email বা phone change হলে duplicate check করা
+    // Email বা phone duplicate check
     if (email || phone) {
       const checkEmail = email || req.user.email;
       const checkPhone = phone || req.user.phone;
@@ -83,7 +88,6 @@ const updateProfile = async (req, res) => {
       }
     }
 
-    // Profile update করা
     const updatedUser = await User.update(userId, req.body);
 
     if (!updatedUser) {
@@ -93,7 +97,6 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    // Password বাদ দিয়ে response পাঠানো
     const { password, ...userWithoutPassword } = updatedUser;
 
     return res.status(200).json({
@@ -112,18 +115,18 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// =============================================
-// UPLOAD PROFILE PICTURE - Profile picture upload
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// UPLOAD PROFILE PICTURE (WITH AUTO-DELETE OLD IMAGE)
+// ═══════════════════════════════════════════════════════════════
 const uploadProfilePicture = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // File check করা
+    // File check
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'কোন ছবি upload করা হয়নি'
+        message: 'কোন image file পাওয়া যায়নি'
       });
     }
 
@@ -136,42 +139,31 @@ const uploadProfilePicture = async (req, res) => {
       });
     }
 
-    // পুরাতন profile picture থাকলে delete করা
-    if (user.profile_picture) {
-      try {
-        const urlParts = user.profile_picture.split('/');
-        const fileName = urlParts[urlParts.length - 1].split('.')[0];
-        const folder = urlParts[urlParts.length - 2];
-        await deleteImage(`${folder}/${fileName}`);
-      } catch (error) {
-        console.error('Old profile picture delete error:', error);
-        // পুরাতন picture delete এ error হলেও continue করা
-      }
-    }
-
-    // Cloudinary এ নতুন image upload করা
-    const uploadResult = await uploadSingleImage(
-      req.file.buffer,
-      'profile',
-      {
-        public_id: `profile_${userId}_${Date.now()}`
-      }
+    // ✅ পুরাতন image থাকলে auto-delete করে নতুন upload করা
+    const uploadResult = await updateImage(
+      user.profile_picture,      // পুরাতন image URL
+      req.file.buffer,            // নতুন file buffer
+      'profile',                  // Upload type
+      userId                      // Entity ID
     );
 
-    // Database এ image URL save করা
+    // Database এ নতুন URL update করা
     const updatedUser = await User.update(userId, {
       profile_picture: uploadResult.url
     });
 
-    // Password বাদ দিয়ে response পাঠানো
     const { password, ...userWithoutPassword } = updatedUser;
 
     return res.status(200).json({
       success: true,
       message: 'Profile picture সফলভাবে upload হয়েছে',
       data: {
-        profile_picture: uploadResult.url,
-        user: userWithoutPassword
+        user: userWithoutPassword,
+        image: {
+          url: uploadResult.url,
+          public_id: uploadResult.public_id,
+          variants: uploadResult.variants
+        }
       }
     });
 
@@ -185,14 +177,13 @@ const uploadProfilePicture = async (req, res) => {
   }
 };
 
-// =============================================
-// DELETE PROFILE PICTURE - Profile picture delete
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// DELETE PROFILE PICTURE
+// ═══════════════════════════════════════════════════════════════
 const deleteProfilePicture = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // User খুঁজে বের করা
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
@@ -201,7 +192,6 @@ const deleteProfilePicture = async (req, res) => {
       });
     }
 
-    // Profile picture check করা
     if (!user.profile_picture) {
       return res.status(400).json({
         success: false,
@@ -209,17 +199,10 @@ const deleteProfilePicture = async (req, res) => {
       });
     }
 
-    // Cloudinary থেকে delete করা
-    try {
-      const urlParts = user.profile_picture.split('/');
-      const fileName = urlParts[urlParts.length - 1].split('.')[0];
-      const folder = urlParts[urlParts.length - 2];
-      await deleteImage(`${folder}/${fileName}`);
-    } catch (error) {
-      console.error('Cloudinary delete error:', error);
-    }
+    // Cloudinary থেকে delete
+    await deleteImage(user.profile_picture);
 
-    // Database থেকে URL remove করা
+    // Database থেকে URL remove
     await User.update(userId, {
       profile_picture: null
     });
@@ -239,9 +222,9 @@ const deleteProfilePicture = async (req, res) => {
   }
 };
 
-// =============================================
-// GET ALL USERS - সব users list (Admin only)
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// GET ALL USERS
+// ═══════════════════════════════════════════════════════════════
 const getAllUsers = async (req, res) => {
   try {
     const { role, status, search, page = 1, limit = 20 } = req.query;
@@ -257,7 +240,6 @@ const getAllUsers = async (req, res) => {
     const users = await User.findAll(filters);
     const totalUsers = await User.count({ role, status });
 
-    // সব users থেকে password বাদ দেওয়া
     const usersWithoutPasswords = users.map(user => {
       const { password, ...userWithoutPassword } = user;
       return userWithoutPassword;
@@ -287,9 +269,9 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// =============================================
-// GET USER BY ID - নির্দিষ্ট user দেখা (Admin only)
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// GET USER BY ID
+// ═══════════════════════════════════════════════════════════════
 const getUserById = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -303,7 +285,6 @@ const getUserById = async (req, res) => {
       });
     }
 
-    // Password বাদ দিয়ে response পাঠানো
     const { password, ...userWithoutPassword } = user;
 
     return res.status(200).json({
@@ -322,12 +303,11 @@ const getUserById = async (req, res) => {
   }
 };
 
-// =============================================
-// UPDATE USER STATUS - User status change (Admin only)
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// UPDATE USER STATUS
+// ═══════════════════════════════════════════════════════════════
 const updateUserStatus = async (req, res) => {
   try {
-    // Validation check
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -340,7 +320,6 @@ const updateUserStatus = async (req, res) => {
     const { userId } = req.params;
     const { status } = req.body;
 
-    // Validation
     const validStatuses = ['active', 'inactive', 'suspended', 'deleted'];
     if (!status || !validStatuses.includes(status)) {
       return res.status(400).json({
@@ -358,7 +337,6 @@ const updateUserStatus = async (req, res) => {
       });
     }
 
-    // Password বাদ দিয়ে response পাঠানো
     const { password, ...userWithoutPassword } = updatedUser;
 
     return res.status(200).json({
@@ -377,9 +355,9 @@ const updateUserStatus = async (req, res) => {
   }
 };
 
-// =============================================
-// GET USER STATISTICS - User statistics (Admin only)
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// GET USER STATISTICS
+// ═══════════════════════════════════════════════════════════════
 const getUserStatistics = async (req, res) => {
   try {
     const statistics = await User.getStatistics();
