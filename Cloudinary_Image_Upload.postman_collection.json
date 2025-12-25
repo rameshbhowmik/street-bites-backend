@@ -1,0 +1,301 @@
+{
+  "info": {
+    "name": "Street Bites - Cloudinary Image Upload",
+    "description": "Complete API collection for image uploads",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Product Images",
+      "item": [
+        {
+          "name": "Upload Single Product Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "/path/to/image.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/images/products/1/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "products", "1", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Upload Multiple Product Images",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "/path/to/image1.jpg"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "/path/to/image2.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/images/products/1/upload-multiple",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "products", "1", "upload-multiple"]
+            }
+          }
+        },
+        {
+          "name": "Delete Product Image",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/images/products/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "products", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Profile Picture",
+      "item": [
+        {
+          "name": "Upload Profile Picture",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "profile_picture",
+                  "type": "file",
+                  "src": "/path/to/profile.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/images/profile/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "profile", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Delete Profile Picture",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/images/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Stall Photos",
+      "item": [
+        {
+          "name": "Upload Stall Photo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": "/path/to/stall.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/images/stalls/1/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "stalls", "1", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Upload Hygiene Photos",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "photos",
+                  "type": "file",
+                  "src": "/path/to/hygiene1.jpg"
+                },
+                {
+                  "key": "photos",
+                  "type": "file",
+                  "src": "/path/to/hygiene2.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/images/stalls/1/hygiene",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "stalls", "1", "hygiene"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Receipt Images",
+      "item": [
+        {
+          "name": "Upload Receipt",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "receipt",
+                  "type": "file",
+                  "src": "/path/to/receipt.jpg"
+                },
+                {
+                  "key": "expense_id",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/images/receipts/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "receipts", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Delete Receipt",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"public_id\": \"street-bites/receipts/receipt_1_1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/images/receipts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "receipts"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Review Images",
+      "item": [
+        {
+          "name": "Upload Review Images",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "/path/to/review1.jpg"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "/path/to/review2.jpg"
+                },
+                {
+                  "key": "review_id",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/images/reviews/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "reviews", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Delete Review Image",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"public_id\": \"street-bites/reviews/review_1_1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/images/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "reviews"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
