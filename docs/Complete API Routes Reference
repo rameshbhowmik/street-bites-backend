@@ -1,0 +1,255 @@
+# 📚 Street Bites API - Complete Routes Reference
+
+## 🔐 Authentication Required
+**Header:** `Authorization: Bearer <JWT_TOKEN>`
+
+---
+
+## 1️⃣ Authentication Routes (`/api/auth`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/register` | Public | নতুন user registration |
+| POST | `/login` | Public | User login |
+| POST | `/refresh-token` | Public | Token refresh |
+| GET | `/profile` | Protected | User profile দেখুন |
+| PUT | `/profile` | Protected | Profile update |
+| POST | `/change-password` | Protected | Password পরিবর্তন |
+| POST | `/logout` | Protected | Logout |
+| POST | `/forgot-password` | Public | Password reset request |
+| POST | `/reset-password` | Public | Reset password |
+
+---
+
+## 2️⃣ User Routes (`/api/users`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/` | Owner | সব users এর list |
+| GET | `/profile` | Protected | নিজের profile |
+| PUT | `/profile` | Protected | Profile update |
+| POST | `/upload-picture` | Protected | Profile picture upload |
+| DELETE | `/profile-picture` | Protected | Profile picture delete |
+| GET | `/statistics/all` | Owner | User statistics |
+| GET | `/:userId` | Owner | User by ID |
+| PUT | `/:userId/status` | Owner | User status update |
+
+---
+
+## 3️⃣ Product Routes (`/api/products`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/` | Public | সব products |
+| GET | `/:productId` | Public | Product details |
+| POST | `/` | Owner | নতুন product তৈরি |
+| PUT | `/:productId` | Owner | Product update |
+| DELETE | `/:productId` | Owner | Product delete |
+| POST | `/:productId/upload-image` | Owner | Product image upload |
+| GET | `/category/:category` | Public | Category অনুযায়ী products |
+| GET | `/search` | Public | Product search |
+
+---
+
+## 4️⃣ Stall Routes (`/api/stalls`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/` | Public | সব active stalls |
+| GET | `/:stallId` | Public | Stall details |
+| POST | `/` | Owner | নতুন stall তৈরি |
+| PUT | `/:stallId` | Owner | Stall update |
+| DELETE | `/:stallId` | Owner | Stall delete |
+| POST | `/:stallId/qr-code` | Owner | QR code upload |
+| POST | `/:stallId/photos` | Owner | Stall photos upload (max 5) |
+| GET | `/:stallId/analytics` | Owner | Stall analytics |
+| GET | `/:stallId/inventory` | Owner/Employee | Stall inventory |
+| GET | `/:stallId/orders` | Owner/Employee | Stall orders |
+| GET | `/owner/:ownerId` | Owner | Owner এর সব stalls |
+
+---
+
+## 5️⃣ Order Routes (`/api/orders`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/` | Protected | সব orders (role-based) |
+| GET | `/:orderId` | Protected | Order details |
+| POST | `/` | Customer | নতুন order |
+| PUT | `/:orderId/status` | Owner/Employee | Order status update |
+| GET | `/customer/:customerId` | Protected | Customer এর orders |
+| GET | `/stall/:stallId` | Owner/Employee | Stall এর orders |
+| GET | `/statistics` | Owner | Order statistics |
+| POST | `/:orderId/cancel` | Customer | Order cancel |
+
+---
+
+## 6️⃣ Image Upload Routes (`/api/images`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/products/:id/upload` | Owner | Product image upload |
+| POST | `/profile/upload` | Protected | Profile picture upload |
+| DELETE | `/profile/delete` | Protected | Profile picture delete |
+| POST | `/stalls/:id/upload` | Owner | Stall photos upload |
+| POST | `/stalls/:id/qr-code` | Owner | QR code upload |
+| POST | `/receipts/upload` | Owner | Receipt upload |
+| POST | `/reviews/upload` | Customer | Review image upload (max 3) |
+
+---
+
+## 📝 Request Examples
+
+### 1. Register New User
+```
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "email": "customer@example.com",
+  "phone": "01712345678",
+  "password": "SecurePass@123",
+  "full_name": "রমেশ ভৌমিক",
+  "role": "Customer"
+}
+```
+
+### 2. Login
+```
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "customer@example.com",
+  "password": "SecurePass@123"
+}
+```
+
+### 3. Upload Profile Picture
+```
+POST /api/images/profile/upload
+Authorization: Bearer <TOKEN>
+Content-Type: multipart/form-data
+
+profile_picture: [image file]
+```
+
+### 4. Create New Product
+```
+POST /api/products
+Authorization: Bearer <OWNER_TOKEN>
+Content-Type: application/json
+
+{
+  "name": "চিকেন বিরিয়ানি",
+  "description": "বাসমতি চাল এবং মসলাদার চিকেন দিয়ে তৈরি",
+  "price": 250.00,
+  "category": "Main Course",
+  "is_available": true
+}
+```
+
+### 5. Create New Order
+```
+POST /api/orders
+Authorization: Bearer <CUSTOMER_TOKEN>
+Content-Type: application/json
+
+{
+  "stall_id": "uuid-here",
+  "order_type": "Delivery",
+  "delivery_address": "123 Main St, Dhaka",
+  "items": [
+    {
+      "product_id": "uuid-here",
+      "quantity": 2,
+      "unit_price": 250.00
+    }
+  ]
+}
+```
+
+---
+
+## 🎯 Response Format
+
+### Success Response
+```json
+{
+  "success": true,
+  "message": "অপারেশন সফল হয়েছে",
+  "data": {
+    // Response data here
+  }
+}
+```
+
+### Error Response
+```json
+{
+  "success": false,
+  "message": "Error message in Bangla",
+  "error": {
+    "code": "ERROR_CODE",
+    "details": "Detailed error message"
+  }
+}
+```
+
+---
+
+## 🔐 Authorization Roles
+
+| Role | Access Level | Description |
+|------|-------------|-------------|
+| **Owner** | Full Access | সব endpoints access করতে পারে |
+| **Employee** | Limited | Stall management, Order processing |
+| **Customer** | Basic | Order করা, Profile manage |
+| **Investor** | Read-only | Reports এবং analytics দেখা |
+
+---
+
+## 📊 File Upload Limits
+
+| Type | Max Size | Max Count | Formats |
+|------|----------|-----------|---------|
+| Profile Picture | 5MB | 1 | JPG, PNG, WebP |
+| Product Image | 5MB | 1 | JPG, PNG, WebP |
+| Stall Photos | 5MB | 5 | JPG, PNG, WebP |
+| QR Code | 2MB | 1 | JPG, PNG |
+| Receipt | 10MB | 1 | JPG, PNG, PDF |
+| Review Images | 3MB | 3 | JPG, PNG |
+
+---
+
+## 🚀 Quick Start
+
+1. **Get API Documentation:**
+   ```
+   GET http://localhost:5000/api
+   ```
+
+2. **Check Server Status:**
+   ```
+   GET http://localhost:5000/api/status
+   ```
+
+3. **Register & Login:**
+   - Register: `POST /api/auth/register`
+   - Login: `POST /api/auth/login`
+   - Save token from response
+
+4. **Use Protected Routes:**
+   Add header: `Authorization: Bearer <TOKEN>`
+
+---
+
+## 📞 Support & Documentation
+
+- **GitHub:** https://github.com/rameshbhowmik/street-bites-backend
+- **API Base URL:** http://localhost:5000/api
+- **Developer:** Ramesh Bhowmik
+
+---
+
+**সব routes Bangla message সহ এবং user-friendly errors দিয়ে তৈরি করা হয়েছে!** 🎉
