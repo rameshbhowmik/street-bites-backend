@@ -1,0 +1,19 @@
+{
+  "id": "street-bites-dev",
+  "name": "Street Bites - Development",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "environment",
+      "value": "development",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}
