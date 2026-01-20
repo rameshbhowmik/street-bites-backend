@@ -1,39 +1,50 @@
 {
   "name": "street-bites-backend",
   "version": "1.0.0",
-  "description": "Street Bites Backend API with Indian mobile number validation",
+  "description": "Street Bites - Food Business Management System Backend",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed:roles": "node src/seeders/roleSeeder.js",
-    "test": "echo \"Running API tests...\" && newman run tests/Street-Bites-API-Collection.json -e tests/Street-Bites-Environment-Dev.json",
-    "test:report": "newman run tests/Street-Bites-API-Collection.json -e tests/Street-Bites-Environment-Dev.json -r cli,html,json --reporter-html-export tests/test-results.html --reporter-json-export tests/test-results.json",
-    "test:watch": "nodemon --exec npm test"
+    "test": "jest --coverage",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.js\""
   },
   "keywords": [
     "food",
-    "street-food",
+    "business",
+    "management",
     "api",
-    "indian-mobile",
-    "otp",
-    "authentication"
+    "nodejs",
+    "express",
+    "mongodb"
   ],
-  "author": "Ramesh Bhowmik",
+  "author": "Street Bites Team",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
-    "mongoose": "^8.0.0",
+    "mongoose": "^8.0.3",
     "dotenv": "^16.3.1",
-    "jsonwebtoken": "^9.0.2",
     "bcryptjs": "^2.4.3",
-    "@supabase/supabase-js": "^2.38.4",
+    "jsonwebtoken": "^9.0.2",
     "cors": "^2.8.5",
     "helmet": "^7.1.0",
-    "express-rate-limit": "^7.1.5"
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "cloudinary": "^1.41.3",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "@supabase/supabase-js": "^2.39.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",
-    "newman": "^6.0.0"
+    "jest": "^29.7.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }

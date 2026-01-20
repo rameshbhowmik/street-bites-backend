@@ -1,4 +1,5 @@
 // backend/src/models/Role.js
+
 const mongoose = require('mongoose');
 
 // ========================
@@ -12,10 +13,10 @@ const roleSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Role নাম প্রয়োজন'],
       unique: true,
-      uppercase: true,
       trim: true,
+      // ⭐ CHANGED: Capital Case (প্রথম অক্ষর বড়)
       enum: {
-        values: ['OWNER', 'INVESTOR', 'MANAGER', 'EMPLOYEE', 'DELIVERY_PERSON', 'CUSTOMER'],
+        values: ['Owner', 'Investor', 'Manager', 'Employee', 'Delivery_Person', 'Customer'],
         message: '{VALUE} সঠিক role নয়',
       },
     },
@@ -180,7 +181,6 @@ roleSchema.methods.isHigherThan = function (otherRole) {
 // Get all granted permissions
 roleSchema.methods.getGrantedPermissions = function () {
   const granted = [];
-  
   Object.keys(this.permissions).forEach((module) => {
     Object.keys(this.permissions[module]).forEach((action) => {
       if (this.permissions[module][action] === true) {
@@ -188,7 +188,6 @@ roleSchema.methods.getGrantedPermissions = function () {
       }
     });
   });
-  
   return granted;
 };
 
@@ -196,9 +195,11 @@ roleSchema.methods.getGrantedPermissions = function () {
 // STATIC METHODS
 // ========================
 
-// Find by role name
+// Find by role name (case-insensitive)
 roleSchema.statics.findByName = function (name) {
-  return this.findOne({ name: name.toUpperCase() });
+  // ⭐ IMPROVED: Case-insensitive search
+  const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  return this.findOne({ name: capitalizedName });
 };
 
 // Get all active roles

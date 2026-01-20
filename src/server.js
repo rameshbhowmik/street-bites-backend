@@ -1,5 +1,6 @@
 // backend/src/server.js
 require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -55,15 +56,30 @@ app.get('/health', (req, res) => {
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
+const userRoutes = require('./routes/user.routes'); // ⭐ NEW
 const orderRoutes = require('./routes/order.routes');
 const stallPerformanceRoutes = require('./routes/stallPerformance.routes');
 const deliveryZoneRoutes = require('./routes/deliveryZone.routes');
+const investorRoutes = require('./routes/investor.routes');
+const expenseRoutes = require('./routes/expense.routes');
+const profitLossRoutes = require('./routes/profitLoss.routes');
+const payrollRoutes = require('./routes/payroll.routes');
 
-// Use routes
+// Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/stall-performance', stallPerformanceRoutes);
 app.use('/api/delivery-zones', deliveryZoneRoutes);
+app.use('/api/investors', investorRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/profit-loss', profitLossRoutes);
+app.use('/api/payroll', payrollRoutes);
+
+// User Management Routes (⭐ NEW - Add these)
+app.use('/api/users', userRoutes);       // User CRUD
+app.use('/api/profile', userRoutes);     // Profile Management
+app.use('/api/employees', userRoutes);   // Employee Management
+app.use('/api/investors', userRoutes);   // Investor Management (via users)
 
 // ============================================
 // Error Handling
@@ -81,7 +97,6 @@ app.use((req, res, next) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
-  
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'সার্ভার এররর',
@@ -114,7 +129,10 @@ app.listen(PORT, () => {
 ║   - POST /api/auth/login                      ║
 ║   - POST /api/orders/create                   ║
 ║   - GET  /api/orders                          ║
-║   - GET  /api/orders/today                    ║
+║   - GET  /api/users            ⭐ NEW         ║
+║   - GET  /api/profile/me       ⭐ NEW         ║
+║   - POST /api/users            ⭐ NEW         ║
+║   - PUT  /api/users/:id        ⭐ NEW         ║
 ║                                               ║
 ╚═══════════════════════════════════════════════╝
   `);

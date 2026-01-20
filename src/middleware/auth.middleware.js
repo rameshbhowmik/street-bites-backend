@@ -265,5 +265,6 @@ exports.optionalAuth = async (req, res, next) => {
 // এগুলো পুরনো code এর জন্য রাখা হয়েছে
 exports.protect = exports.authenticateToken;
 exports.authorize = exports.authorizeRoles;
+exports.restrictTo = exports.authorizeRoles;
 
 module.exports = exports;

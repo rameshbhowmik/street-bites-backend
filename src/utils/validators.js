@@ -1,5 +1,35 @@
 // backend/src/utils/validators.js
 
+const { validationResult } = require('express-validator');
+
+// ========================
+// EXPRESS-VALIDATOR MIDDLEWARE
+// ========================
+
+/**
+ * Validation results check করে এবং error থাকলে response পাঠায়
+ * express-validator এর সাথে ব্যবহার করতে হবে
+ */
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  
+  if (!errors.isEmpty()) {
+    const errorMessages = errors.array().map(err => ({
+      field: err.path || err.param,
+      message: err.msg,
+      value: err.value
+    }));
+
+    return res.status(400).json({
+      success: false,
+      message: 'Validation error',
+      errors: errorMessages
+    });
+  }
+  
+  next();
+};
+
 // ========================
 // INDIAN MOBILE NUMBER VALIDATOR
 // ========================
@@ -249,7 +279,6 @@ const validateOTP = (otp) => {
  */
 const formatPhoneNumber = (phone) => {
   const validation = validateIndianPhone(phone);
-  
   if (!validation.isValid) {
     return null;
   }
@@ -302,6 +331,7 @@ const validateBulkPhones = (phones) => {
 // ========================
 
 module.exports = {
+  validate, // ⭐ NEW - Express-validator middleware
   validateIndianPhone,
   validateEmail,
   validatePassword,
@@ -345,4 +375,17 @@ console.log(formats);
 // Example 5: Validate multiple phones
 const bulkResult = validateBulkPhones(['9876543210', '1234567890', '+917890123456']);
 console.log(bulkResult);
+
+// Example 6: Using validate middleware in routes
+const { body } = require('express-validator');
+const { validate } = require('./validators');
+
+router.post('/create-user',
+  [
+    body('name').trim().notEmpty().withMessage('Name required'),
+    body('email').isEmail().withMessage('Valid email required'),
+    validate // ⭐ This will check validation and return errors
+  ],
+  createUserController
+);
 */
