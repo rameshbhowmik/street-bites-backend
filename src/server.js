@@ -1,4 +1,5 @@
 // backend/src/server.js
+
 require('dotenv').config();
 
 const express = require('express');
@@ -56,7 +57,7 @@ app.get('/health', (req, res) => {
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
-const userRoutes = require('./routes/user.routes'); // ⭐ NEW
+const userRoutes = require('./routes/user.routes');
 const orderRoutes = require('./routes/order.routes');
 const stallPerformanceRoutes = require('./routes/stallPerformance.routes');
 const deliveryZoneRoutes = require('./routes/deliveryZone.routes');
@@ -65,8 +66,15 @@ const expenseRoutes = require('./routes/expense.routes');
 const profitLossRoutes = require('./routes/profitLoss.routes');
 const payrollRoutes = require('./routes/payroll.routes');
 
+// ⭐ PART 9 - Product Management Routes
+const productRoutes = require('./routes/product.routes');
+const categoryRoutes = require('./routes/category.routes');
+
 // Mount routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/profile', userRoutes);
+app.use('/api/employees', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/stall-performance', stallPerformanceRoutes);
 app.use('/api/delivery-zones', deliveryZoneRoutes);
@@ -75,11 +83,9 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/profit-loss', profitLossRoutes);
 app.use('/api/payroll', payrollRoutes);
 
-// User Management Routes (⭐ NEW - Add these)
-app.use('/api/users', userRoutes);       // User CRUD
-app.use('/api/profile', userRoutes);     // Profile Management
-app.use('/api/employees', userRoutes);   // Employee Management
-app.use('/api/investors', userRoutes);   // Investor Management (via users)
+// ⭐ PART 9 - Product & Category Routes
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // ============================================
 // Error Handling
@@ -123,16 +129,35 @@ app.listen(PORT, () => {
 ║   API Documentation:                          ║
 ║   http://localhost:${PORT}/api                    ║
 ║                                               ║
+║   📦 Part 9 - Product Management APIs         ║
+║   ✅ Product CRUD (18 endpoints)              ║
+║   ✅ Category Management (11 endpoints)       ║
+║   ✅ Image Upload (Multiple)                  ║
+║   ✅ Search & Filters                         ║
+║                                               ║
 ║   Available Routes:                           ║
 ║   - GET  /health                              ║
 ║   - POST /api/auth/register                   ║
+║   - POST /api/auth/verify-otp                 ║
 ║   - POST /api/auth/login                      ║
+║   - GET /api/auth/me                          ║
+║   - POST /api/auth/refresh-token              ║
+║   - POST /api/auth/forgot-password            ║
+║   - POST /api/auth/2fa                        ║
+║   - GET /api/auth/devices                     ║
+║   - GET  /api/users                           ║
+║   - GET  /api/profile/me                      ║
 ║   - POST /api/orders/create                   ║
 ║   - GET  /api/orders                          ║
-║   - GET  /api/users            ⭐ NEW         ║
-║   - GET  /api/profile/me       ⭐ NEW         ║
-║   - POST /api/users            ⭐ NEW         ║
-║   - PUT  /api/users/:id        ⭐ NEW         ║
+║                                               ║
+║   ⭐ NEW - Part 9:                            ║
+║   - GET  /api/products          (18 APIs)     ║
+║   - GET  /api/categories        (11 APIs)     ║
+║   - POST /api/products          (+ images)    ║
+║   - POST /api/categories        (+ image)     ║
+║   - GET  /api/products/search?q=              ║
+║   - GET  /api/products/featured               ║
+║   - GET  /api/products/trending               ║
 ║                                               ║
 ╚═══════════════════════════════════════════════╝
   `);
