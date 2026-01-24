@@ -1,4 +1,4 @@
-// backend/src/models/Role.js
+// backend/src/models/Role.js - FIXED VERSION
 
 const mongoose = require('mongoose');
 
@@ -14,9 +14,10 @@ const roleSchema = new mongoose.Schema(
       required: [true, 'Role নাম প্রয়োজন'],
       unique: true,
       trim: true,
-      // ⭐ CHANGED: Capital Case (প্রথম অক্ষর বড়)
+      // 🔥 LOWERCASE stored in database for consistency
+      lowercase: true,
       enum: {
-        values: ['Owner', 'Investor', 'Manager', 'Employee', 'Delivery_Person', 'Customer'],
+        values: ['owner', 'investor', 'manager', 'employee', 'delivery_person', 'customer'],
         message: '{VALUE} সঠিক role নয়',
       },
     },
@@ -50,7 +51,7 @@ const roleSchema = new mongoose.Schema(
         read: { type: Boolean, default: false },
         update: { type: Boolean, default: false },
         delete: { type: Boolean, default: false },
-        viewAll: { type: Boolean, default: false }, // সব user দেখতে পারবে
+        viewAll: { type: Boolean, default: false },
       },
 
       // ===== Role Management =====
@@ -64,7 +65,7 @@ const roleSchema = new mongoose.Schema(
       // ===== Product Management =====
       products: {
         create: { type: Boolean, default: false },
-        read: { type: Boolean, default: true }, // সবাই products দেখতে পারবে
+        read: { type: Boolean, default: true },
         update: { type: Boolean, default: false },
         delete: { type: Boolean, default: false },
         manageStock: { type: Boolean, default: false },
@@ -85,7 +86,7 @@ const roleSchema = new mongoose.Schema(
         read: { type: Boolean, default: false },
         update: { type: Boolean, default: false },
         delete: { type: Boolean, default: false },
-        viewAll: { type: Boolean, default: false }, // সব order দেখতে পারবে
+        viewAll: { type: Boolean, default: false },
         assignDelivery: { type: Boolean, default: false },
         cancelOrder: { type: Boolean, default: false },
       },
@@ -195,11 +196,15 @@ roleSchema.methods.getGrantedPermissions = function () {
 // STATIC METHODS
 // ========================
 
-// Find by role name (case-insensitive)
+// 🔥 IMPROVED: Find by role name (completely case-insensitive)
 roleSchema.statics.findByName = function (name) {
-  // ⭐ IMPROVED: Case-insensitive search
-  const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-  return this.findOne({ name: capitalizedName });
+  if (!name) return null;
+  
+  // Normalize: lowercase and trim
+  const normalizedName = name.toLowerCase().trim();
+  
+  // Database-এ lowercase stored আছে, তাই direct match করবে
+  return this.findOne({ name: normalizedName });
 };
 
 // Get all active roles
@@ -211,6 +216,18 @@ roleSchema.statics.findActive = function () {
 roleSchema.statics.findByMinLevel = function (minLevel) {
   return this.find({ level: { $gte: minLevel }, isActive: true }).sort({ level: -1 });
 };
+
+// ========================
+// PRE-SAVE MIDDLEWARE
+// ========================
+
+// 🔥 Ensure name is always lowercase before saving
+roleSchema.pre('save', function (next) {
+  if (this.isModified('name')) {
+    this.name = this.name.toLowerCase().trim();
+  }
+  next();
+});
 
 // ========================
 // MODEL EXPORT

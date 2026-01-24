@@ -1,18 +1,12 @@
-// backend/src/models/StallPerformance.js
+// backend/src/models/StallPerformance.js - FIXED VERSION
+
 const mongoose = require('mongoose');
 
 /**
  * Stall Performance Schema
  * স্টল পারফরম্যান্স স্কিমা
- * 
+ *
  * Purpose: প্রতিটি স্টলের দৈনিক/সাপ্তাহিক/মাসিক পারফরম্যান্স ট্র্যাক করা
- * Features:
- * - দৈনিক/সাপ্তাহিক/মাসিক বিক্রয় ট্র্যাকিং
- * - অর্ডার সংখ্যা এবং রেটিং
- * - ওয়েস্টেজ ম্যানেজমেন্ট
- * - আইটেম-ওয়াইজ বিক্রয় বিশ্লেষণ
- * - কর্মচারী-ওয়াইজ পারফরম্যান্স
- * - পারফরম্যান্স স্কোর এবং রিমার্কস
  */
 
 const stallPerformanceSchema = new mongoose.Schema({
@@ -21,7 +15,7 @@ const stallPerformanceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Stall',
     required: [true, 'স্টল আইডি প্রয়োজন'],
-    index: true // দ্রুত খোঁজার জন্য
+    index: true
   },
 
   stallName: {
@@ -47,7 +41,6 @@ const stallPerformanceSchema = new mongoose.Schema({
     default: 'daily'
   },
 
-  // সপ্তাহ এবং মাসের রেফারেন্স
   weekNumber: {
     type: Number,
     min: [1, 'সপ্তাহ নম্বর ১ থেকে শুরু হয়'],
@@ -72,13 +65,11 @@ const stallPerformanceSchema = new mongoose.Schema({
       default: 0,
       min: [0, 'দৈনিক বিক্রয় ঋণাত্মক হতে পারে না']
     },
-    
     weeklySales: {
       type: Number,
       default: 0,
       min: [0, 'সাপ্তাহিক বিক্রয় ঋণাত্মক হতে পারে না']
     },
-    
     monthlySales: {
       type: Number,
       default: 0,
@@ -97,7 +88,6 @@ const stallPerformanceSchema = new mongoose.Schema({
       min: [0, 'বাতিল অর্ডার সংখ্যা ঋণাত্মক হতে পারে না']
     },
 
-    // পেমেন্ট মেথড অনুযায়ী বিভাজন
     paymentBreakdown: {
       cashSales: {
         type: Number,
@@ -133,7 +123,6 @@ const stallPerformanceSchema = new mongoose.Schema({
       min: [0, 'রিভিউ সংখ্যা ঋণাত্মক হতে পারে না']
     },
 
-    // রেটিং ডিস্ট্রিবিউশন
     ratingDistribution: {
       fiveStars: { type: Number, default: 0 },
       fourStars: { type: Number, default: 0 },
@@ -142,7 +131,6 @@ const stallPerformanceSchema = new mongoose.Schema({
       oneStar: { type: Number, default: 0 }
     },
 
-    // কমন কমপ্লেইন এবং ফিডব্যাক
     commonComplaints: [{
       complaint: String,
       count: {
@@ -178,19 +166,18 @@ const stallPerformanceSchema = new mongoose.Schema({
       min: [0, 'ওয়েস্টেজ মূল্য ঋণাত্মক হতে পারে না']
     },
 
-    // ওয়েস্টেজের কারণ সমূহ
     wastageReasons: [{
       reason: {
         type: String,
         enum: {
           values: [
-            'expired',           // মেয়াদ শেষ
-            'overproduction',    // অতিরিক্ত উৎপাদন
-            'spoilage',          // নষ্ট হয়ে যাওয়া
-            'preparation-error', // প্রস্তুতিতে ভুল
-            'customer-return',   // কাস্টমার ফেরত
-            'quality-issue',     // মানের সমস্যা
-            'other'              // অন্যান্য
+            'expired',
+            'overproduction',
+            'spoilage',
+            'preparation-error',
+            'customer-return',
+            'quality-issue',
+            'other'
           ],
           message: 'সঠিক ওয়েস্টেজ কারণ নির্বাচন করুন'
         }
@@ -200,7 +187,6 @@ const stallPerformanceSchema = new mongoose.Schema({
       notes: String
     }],
 
-    // আইটেম-ওয়াইজ ওয়েস্টেজ
     itemWiseWastage: [{
       productId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -214,7 +200,6 @@ const stallPerformanceSchema = new mongoose.Schema({
 
   // ============ বেস্ট/লিস্ট সেলিং আইটেম ============
   salesAnalysis: {
-    // বেস্ট সেলিং আইটেম (top 10)
     bestSellingItems: [{
       productId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -227,7 +212,6 @@ const stallPerformanceSchema = new mongoose.Schema({
       rank: Number
     }],
 
-    // লিস্ট সেলিং আইটেম (bottom 10)
     leastSellingItems: [{
       productId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -240,7 +224,6 @@ const stallPerformanceSchema = new mongoose.Schema({
       rank: Number
     }],
 
-    // আইটেম-ওয়াইজ বিক্রয় অবদান
     itemWiseSalesContribution: [{
       productId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -256,7 +239,6 @@ const stallPerformanceSchema = new mongoose.Schema({
 
   // ============ কর্মচারী পারফরম্যান্স ============
   employeePerformance: {
-    // কর্মচারী-ওয়াইজ বিক্রয় অবদান
     employeeWiseSales: [{
       employeeId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -269,7 +251,6 @@ const stallPerformanceSchema = new mongoose.Schema({
       contributionPercentage: Number
     }],
 
-    // উপস্থিতি সারাংশ
     attendanceSummary: {
       totalWorkingDays: {
         type: Number,
@@ -295,7 +276,6 @@ const stallPerformanceSchema = new mongoose.Schema({
       }
     },
 
-    // টপ পারফর্মার
     topPerformer: {
       employeeId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -309,7 +289,6 @@ const stallPerformanceSchema = new mongoose.Schema({
 
   // ============ পারফরম্যান্স মেট্রিক্স ============
   performanceMetrics: {
-    // পারফরম্যান্স রেটিং
     overallRating: {
       type: Number,
       min: [0, 'রেটিং সর্বনিম্ন ০'],
@@ -317,7 +296,6 @@ const stallPerformanceSchema = new mongoose.Schema({
       default: 0
     },
 
-    // পারফরম্যান্স স্কোর (0-100)
     performanceScore: {
       type: Number,
       min: [0, 'স্কোর সর্বনিম্ন ০'],
@@ -325,7 +303,6 @@ const stallPerformanceSchema = new mongoose.Schema({
       default: 0
     },
 
-    // টার্গেট অর্জন
     targetAchievement: {
       dailyTargetAchieved: {
         type: Boolean,
@@ -346,13 +323,12 @@ const stallPerformanceSchema = new mongoose.Schema({
       }
     },
 
-    // কর্মদক্ষতা সূচক
     efficiencyIndicators: {
-      averageOrderValue: Number,        // গড় অর্ডার মূল্য
-      orderFulfillmentRate: Number,     // অর্ডার পূরণের হার (%)
-      customerSatisfactionScore: Number, // কাস্টমার সন্তুষ্টি স্কোর
-      wastagePercentage: Number,        // ওয়েস্টেজ শতাংশ
-      profitMargin: Number              // প্রফিট মার্জিন (%)
+      averageOrderValue: Number,
+      orderFulfillmentRate: Number,
+      customerSatisfactionScore: Number,
+      wastagePercentage: Number,
+      profitMargin: Number
     }
   },
 
@@ -390,7 +366,11 @@ const stallPerformanceSchema = new mongoose.Schema({
         ref: 'User'
       },
       userName: String,
-      userRole: String
+      // 🔥 FIXED: userRole will be lowercase (from User model)
+      userRole: {
+        type: String,
+        lowercase: true  // Ensure lowercase
+      }
     },
     dueDate: Date,
     status: {
@@ -417,7 +397,7 @@ const stallPerformanceSchema = new mongoose.Schema({
     default: 'draft'
   },
 
-  // রিপোর্ট তৈরি এবং রিভিউ
+  // 🔥 FIXED: Ensure userRole is lowercase
   reportedBy: {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -425,7 +405,10 @@ const stallPerformanceSchema = new mongoose.Schema({
       required: true
     },
     userName: String,
-    userRole: String
+    userRole: {
+      type: String,
+      lowercase: true  // Ensure lowercase
+    }
   },
 
   reviewedBy: {
@@ -434,7 +417,10 @@ const stallPerformanceSchema = new mongoose.Schema({
       ref: 'User'
     },
     userName: String,
-    userRole: String,
+    userRole: {
+      type: String,
+      lowercase: true  // Ensure lowercase
+    },
     reviewDate: Date,
     reviewComments: String
   },
@@ -444,32 +430,28 @@ const stallPerformanceSchema = new mongoose.Schema({
     default: true
   }
 }, {
-  timestamps: true, // createdAt এবং updatedAt অটোমেটিক যুক্ত হবে
+  timestamps: true,
   versionKey: false
 });
 
 // ============ INDEXES ============
-// দ্রুত সার্চের জন্য compound index
 stallPerformanceSchema.index({ stallId: 1, performanceDate: -1 });
 stallPerformanceSchema.index({ stallId: 1, performancePeriod: 1, performanceDate: -1 });
 stallPerformanceSchema.index({ performanceDate: -1 });
 stallPerformanceSchema.index({ 'performanceMetrics.performanceScore': -1 });
 
 // ============ VIRTUAL FIELDS ============
-// ওয়েস্টেজ পার্সেন্টেজ
 stallPerformanceSchema.virtual('wastagePercentage').get(function() {
   if (this.salesData.dailySales === 0) return 0;
   return ((this.wastage.wastageValue / this.salesData.dailySales) * 100).toFixed(2);
 });
 
-// প্রফিট মার্জিন পার্সেন্টেজ
 stallPerformanceSchema.virtual('profitMarginPercentage').get(function() {
   if (this.salesData.dailySales === 0) return 0;
   const profit = this.salesData.dailySales - this.wastage.wastageValue;
   return ((profit / this.salesData.dailySales) * 100).toFixed(2);
 });
 
-// অর্ডার সাকসেস রেট
 stallPerformanceSchema.virtual('orderSuccessRate').get(function() {
   const totalOrders = this.salesData.totalOrders;
   if (totalOrders === 0) return 0;
@@ -477,7 +459,6 @@ stallPerformanceSchema.virtual('orderSuccessRate').get(function() {
   return ((successfulOrders / totalOrders) * 100).toFixed(2);
 });
 
-// পারফরম্যান্স গ্রেড
 stallPerformanceSchema.virtual('performanceGrade').get(function() {
   const score = this.performanceMetrics.performanceScore;
   if (score >= 90) return 'A+ (অসাধারণ)';
@@ -489,18 +470,16 @@ stallPerformanceSchema.virtual('performanceGrade').get(function() {
 });
 
 // ============ STATIC METHODS ============
-// স্টল-ওয়াইজ পারফরম্যান্স খুঁজুন
 stallPerformanceSchema.statics.findByStall = function(stallId, period = 'daily', limit = 30) {
-  return this.find({ 
-    stallId, 
+  return this.find({
+    stallId,
     performancePeriod: period,
-    isActive: true 
+    isActive: true
   })
   .sort({ performanceDate: -1 })
   .limit(limit);
 };
 
-// তারিখ রেঞ্জ অনুযায়ী পারফরম্যান্স
 stallPerformanceSchema.statics.findByDateRange = function(stallId, startDate, endDate) {
   return this.find({
     stallId,
@@ -512,20 +491,18 @@ stallPerformanceSchema.statics.findByDateRange = function(stallId, startDate, en
   }).sort({ performanceDate: -1 });
 };
 
-// টপ পারফর্মিং স্টল খুঁজুন
 stallPerformanceSchema.statics.findTopPerformingStalls = function(period = 'monthly', limit = 10) {
-  return this.find({ 
+  return this.find({
     performancePeriod: period,
-    isActive: true 
+    isActive: true
   })
   .sort({ 'performanceMetrics.performanceScore': -1 })
   .limit(limit)
   .select('stallId stallName performanceMetrics salesData customerFeedback');
 };
 
-// লো পারফর্মিং স্টল খুঁজুন
 stallPerformanceSchema.statics.findLowPerformingStalls = function(period = 'monthly', limit = 10) {
-  return this.find({ 
+  return this.find({
     performancePeriod: period,
     isActive: true,
     'performanceMetrics.performanceScore': { $lt: 60 }
@@ -535,7 +512,6 @@ stallPerformanceSchema.statics.findLowPerformingStalls = function(period = 'mont
   .select('stallId stallName performanceMetrics salesData wastage');
 };
 
-// হাই ওয়েস্টেজ স্টল খুঁজুন
 stallPerformanceSchema.statics.findHighWastageStalls = function(threshold = 10, limit = 10) {
   return this.aggregate([
     {
@@ -568,37 +544,34 @@ stallPerformanceSchema.statics.findHighWastageStalls = function(threshold = 10, 
 };
 
 // ============ INSTANCE METHODS ============
-// পারফরম্যান্স স্কোর ক্যালকুলেট করুন
 stallPerformanceSchema.methods.calculatePerformanceScore = function() {
   let score = 0;
-  
+
   // বিক্রয় টার্গেট অর্জন (40%)
   if (this.performanceMetrics.targetAchievement.achievementPercentage) {
     score += (this.performanceMetrics.targetAchievement.achievementPercentage * 0.4);
   }
-  
+
   // কাস্টমার রেটিং (30%)
   if (this.customerFeedback.averageRating) {
     score += ((this.customerFeedback.averageRating / 5) * 30);
   }
-  
-  // ওয়েস্টেজ কন্ট্রোল (20%) - কম ওয়েস্টেজ = বেশি স্কোর
+
+  // ওয়েস্টেজ কন্ট্রোল (20%)
   const wastagePercent = parseFloat(this.wastagePercentage) || 0;
   score += Math.max(0, 20 - wastagePercent);
-  
+
   // অর্ডার সাকসেস রেট (10%)
   const successRate = parseFloat(this.orderSuccessRate) || 0;
   score += (successRate * 0.1);
-  
+
   this.performanceMetrics.performanceScore = Math.min(100, Math.max(0, score));
   return this.performanceMetrics.performanceScore;
 };
 
-// বেস্ট সেলিং আইটেম যোগ করুন
 stallPerformanceSchema.methods.updateBestSellingItems = function(items) {
-  // items হল একটি array of {productId, productName, quantitySold, totalRevenue}
   const totalRevenue = items.reduce((sum, item) => sum + item.totalRevenue, 0);
-  
+
   this.salesAnalysis.bestSellingItems = items
     .sort((a, b) => b.quantitySold - a.quantitySold)
     .slice(0, 10)
@@ -609,12 +582,11 @@ stallPerformanceSchema.methods.updateBestSellingItems = function(items) {
     }));
 };
 
-// কমপ্লেইন যোগ করুন
 stallPerformanceSchema.methods.addComplaint = function(complaint) {
   const existing = this.customerFeedback.commonComplaints.find(
     c => c.complaint.toLowerCase() === complaint.toLowerCase()
   );
-  
+
   if (existing) {
     existing.count += 1;
   } else {
@@ -623,17 +595,15 @@ stallPerformanceSchema.methods.addComplaint = function(complaint) {
       count: 1
     });
   }
-  
+
   return this.save();
 };
 
-// অ্যাকশন আইটেম যোগ করুন
 stallPerformanceSchema.methods.addActionItem = function(actionData) {
   this.actionItems.push(actionData);
   return this.save();
 };
 
-// রিপোর্ট সাবমিট করুন
 stallPerformanceSchema.methods.submitReport = function() {
   this.reportStatus = 'submitted';
   return this.save();
@@ -645,19 +615,19 @@ stallPerformanceSchema.pre('save', function(next) {
   if (this.isModified('salesData') || this.isModified('customerFeedback') || this.isModified('wastage')) {
     this.calculatePerformanceScore();
   }
-  
+
   // সপ্তাহ, মাস, বছর নম্বর সেট করুন
   if (this.performanceDate) {
     const date = new Date(this.performanceDate);
     this.yearNumber = date.getFullYear();
     this.monthNumber = date.getMonth() + 1;
-    
+
     // সপ্তাহ নম্বর ক্যালকুলেট (ISO 8601)
     const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
     const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
     this.weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
   }
-  
+
   next();
 });
 

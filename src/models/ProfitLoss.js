@@ -1,10 +1,11 @@
-// backend/src/models/ProfitLoss.js
+// backend/src/models/ProfitLoss.js (Role Fixed)
 
 const mongoose = require('mongoose');
 
 /**
  * Profit/Loss Schema - লাভ/ক্ষতি হিসাব স্কিমা
  * দৈনিক/মাসিক/বার্ষিক লাভ-ক্ষতি ট্র্যাকিং
+ * ✅ Fixed: userRole case-sensitivity issues
  */
 const profitLossSchema = new mongoose.Schema({
   // ============ সময়কাল তথ্য ============
@@ -48,13 +49,11 @@ const profitLossSchema = new mongoose.Schema({
       enum: ['all', 'stall', 'production-house'],
       default: 'all'
     },
-    
     stallId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Stall'
     },
     stallName: String,
-    
     productionHouseId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'ProductionHouse'
@@ -376,7 +375,12 @@ const profitLossSchema = new mongoose.Schema({
       ref: 'User'
     },
     userName: String,
-    userRole: String
+    // ✅ FIXED: Added proper role validation with case-insensitive support
+    userRole: {
+      type: String,
+      enum: ['owner', 'manager', 'Owner', 'Manager'],
+      set: val => val ? val.toLowerCase() : val
+    }
   },
 
   generatedDate: {
@@ -394,7 +398,12 @@ const profitLossSchema = new mongoose.Schema({
     approvedBy: {
       userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
       userName: String,
-      userRole: String
+      // ✅ FIXED: Added proper role validation with case-insensitive support
+      userRole: {
+        type: String,
+        enum: ['owner', 'manager', 'Owner', 'Manager'],
+        set: val => val ? val.toLowerCase() : val
+      }
     },
 
     approvalDate: Date,
@@ -447,7 +456,7 @@ profitLossSchema.virtual('netRevenue').get(function() {
 // Break-even Point
 profitLossSchema.virtual('breakEvenPoint').get(function() {
   if (this.expenses.variableExpenses === 0) return 0;
-  return this.expenses.fixedExpenses / 
+  return this.expenses.fixedExpenses /
     (1 - (this.expenses.variableExpenses / this.revenue.totalSales));
 });
 
@@ -572,8 +581,8 @@ profitLossSchema.statics.getOverallStats = async function(startDate, endDate) {
 // সব হিসাব আপডেট করুন
 profitLossSchema.methods.calculateAll = function() {
   // Gross Revenue
-  this.profitLoss.grossRevenue = this.revenue.totalSales - 
-    this.deductions.totalDiscountGiven - 
+  this.profitLoss.grossRevenue = this.revenue.totalSales -
+    this.deductions.totalDiscountGiven -
     this.deductions.refundsGiven;
 
   // Total Cost
@@ -583,12 +592,12 @@ profitLossSchema.methods.calculateAll = function() {
   this.profitLoss.grossProfit = this.profitLoss.grossRevenue - this.profitLoss.totalCost;
 
   // Net Profit/Loss
-  this.profitLoss.netProfitLoss = this.profitLoss.grossProfit - 
+  this.profitLoss.netProfitLoss = this.profitLoss.grossProfit -
     this.taxDetails.taxPayable;
 
   // Profit Margin
   if (this.profitLoss.grossRevenue > 0) {
-    this.profitLoss.profitMarginPercentage = 
+    this.profitLoss.profitMarginPercentage =
       ((this.profitLoss.netProfitLoss / this.profitLoss.grossRevenue) * 100).toFixed(2);
   }
 
@@ -602,7 +611,7 @@ profitLossSchema.methods.calculateAll = function() {
   }
 
   // Owner Share
-  this.profitDistribution.ownerShare.amount = 
+  this.profitDistribution.ownerShare.amount =
     (this.profitLoss.netProfitLoss * this.profitDistribution.ownerShare.percentage) / 100;
 
   // Average Order Value
@@ -616,20 +625,18 @@ profitLossSchema.methods.calculateAll = function() {
 // বিনিয়োগকারী শেয়ার যোগ করুন
 profitLossSchema.methods.addInvestorShare = function(investorData) {
   const shareAmount = (this.profitLoss.netProfitLoss * investorData.sharePercentage) / 100;
-  
   this.profitDistribution.investorShares.push({
     investorId: investorData.investorId,
     investorName: investorData.investorName,
     sharePercentage: investorData.sharePercentage,
     shareAmount: shareAmount,
     investmentAmount: investorData.investmentAmount,
-    roiPercentage: investorData.investmentAmount > 0 
+    roiPercentage: investorData.investmentAmount > 0
       ? ((shareAmount / investorData.investmentAmount) * 100).toFixed(2)
       : 0
   });
 
   this.profitDistribution.totalInvestorShare += shareAmount;
-  
   return this;
 };
 
@@ -646,12 +653,11 @@ profitLossSchema.methods.approve = async function(approverData) {
   this.approvalDetails.approvedBy = {
     userId: approverData.userId,
     userName: approverData.userName,
-    userRole: approverData.userRole
+    userRole: approverData.userRole // Auto-normalized to lowercase by setter
   };
   this.approvalDetails.approvalDate = new Date();
   this.approvalDetails.approverComments = approverData.comments;
   this.reportStatus = 'approved';
-  
   return await this.save();
 };
 
@@ -667,7 +673,6 @@ profitLossSchema.pre('save', function(next) {
   if (this.isModified('revenue') || this.isModified('expenses')) {
     this.calculateAll();
   }
-  
   next();
 });
 

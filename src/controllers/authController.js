@@ -1,4 +1,5 @@
-// backend/src/controllers/authController.js - ENHANCED VERSION
+// backend/src/controllers/authController.js - ROLE CASE FIXED
+
 const User = require('../models/User');
 const Role = require('../models/Role');
 const LoginHistory = require('../models/LoginHistory');
@@ -9,14 +10,13 @@ const crypto = require('crypto');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const { validateIndianPhone, validateEmail, validatePassword, validateOTP } = require('../utils/validators');
-const { 
-  sendEmailOTP, 
-  sendPhoneOTP, 
+const {
+  sendEmailOTP,
+  sendPhoneOTP,
   sendPasswordResetEmail,
   send2FASetupEmail,
-  sendSuspiciousLoginAlert 
+  sendSuspiciousLoginAlert
 } = require('../config/supabase');
-const emailTemplates = require('../utils/emailTemplates');
 
 // ========================
 // HELPER: GENERATE TOKENS
@@ -40,6 +40,16 @@ const getDeviceFingerprint = (req) => {
   const ua = req.get('user-agent') || '';
   const ip = req.ip || '';
   return crypto.createHash('sha256').update(ua + ip).digest('hex');
+};
+
+// ========================
+// 🔥 HELPER: NORMALIZE ROLE NAME (NEW)
+// ========================
+
+const normalizeRoleName = (roleName) => {
+  if (!roleName) return 'customer';
+  // Convert to lowercase and trim whitespace
+  return roleName.toLowerCase().trim();
 };
 
 // ========================
@@ -75,14 +85,17 @@ const detectSuspiciousLogin = async (user, req) => {
 };
 
 // ========================
-// 1. REGISTER - Enhanced
+// 1. REGISTER - Enhanced with Role Fix
 // ========================
 
 exports.register = async (req, res) => {
   try {
     const { fullName, email, phone, password, roleName = 'CUSTOMER' } = req.body;
 
-    // Validation (existing code...)
+    // 🔥 NORMALIZE ROLE NAME (FIX)
+    const normalizedRoleName = normalizeRoleName(roleName);
+
+    // Validation
     const phoneValidation = validateIndianPhone(phone);
     if (!phoneValidation.isValid) {
       return res.status(400).json({ success: false, message: phoneValidation.error });
@@ -109,10 +122,13 @@ exports.register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'এই মোবাইল নম্বর দিয়ে ইতিমধ্যে একাউন্ট আছে' });
     }
 
-    // Get Role
-    const role = await Role.findByName(roleName);
+    // 🔥 GET ROLE (WITH NORMALIZED NAME)
+    const role = await Role.findByName(normalizedRoleName);
     if (!role) {
-      return res.status(400).json({ success: false, message: 'Invalid role' });
+      return res.status(400).json({ 
+        success: false, 
+        message: `Invalid role: ${roleName}. Available roles: owner, investor, manager, employee, delivery_person, customer` 
+      });
     }
 
     // Create User
@@ -231,7 +247,7 @@ exports.login = async (req, res) => {
 
     // Detect suspicious activity
     const { isSuspicious, reasons } = await detectSuspiciousLogin(user, req);
-    
+
     // Create login history
     const deviceFingerprint = getDeviceFingerprint(req);
     const loginHistory = await LoginHistory.create({
@@ -293,8 +309,8 @@ exports.login = async (req, res) => {
           fullName: user.fullName,
           email: user.email,
           phone: user.phoneFormatted,
-          role: user.role.name,
-          profilePicture: user.profilePicture.url,
+          role: user.role.name, // 🔥 Already lowercase from database
+          profilePicture: user.profilePicture?.url,
         },
       },
     });
@@ -329,7 +345,7 @@ exports.verify2FA = async (req, res) => {
       secret: user.twoFactorSecret,
       encoding: 'base32',
       token: code,
-      window: 2, // Allow 1 minute before/after
+      window: 2,
     });
 
     if (!verified) {
@@ -369,7 +385,7 @@ exports.verify2FA = async (req, res) => {
           fullName: user.fullName,
           email: user.email,
           phone: user.phoneFormatted,
-          role: user.role.name,
+          role: user.role.name, // 🔥 Already lowercase
         },
       },
     });
@@ -495,7 +511,7 @@ exports.resetPassword = async (req, res) => {
     user.passwordChangedAt = Date.now();
     await user.save();
 
-    // Revoke all refresh tokens (force logout from all devices)
+    // Revoke all refresh tokens
     await RefreshToken.revokeAllUserTokens(user._id, 'password_changed');
     await LoginHistory.terminateAllSessions(user._id, 'security_logout');
 
@@ -540,13 +556,13 @@ exports.enable2FA = async (req, res) => {
       backupCodes.push(crypto.randomBytes(4).toString('hex').toUpperCase());
     }
 
-    // Save temporarily (not enabled until verified)
+    // Save temporarily
     user.twoFactorSecret = secret.base32;
     user.twoFactorBackupCodes = backupCodes;
-    user.twoFactorEnabled = false; // Will be enabled after verification
+    user.twoFactorEnabled = false;
     await user.save();
 
-    // Send email with backup codes
+    // Send email
     await send2FASetupEmail(user.email, qrCodeUrl, backupCodes, user.fullName);
 
     res.status(200).json({
@@ -667,8 +683,6 @@ exports.getLoginHistory = async (req, res) => {
       .lean();
 
     const total = await LoginHistory.countDocuments({ userId: req.user.id });
-
-    // Get statistics
     const stats = await LoginHistory.getUserStats(req.user.id);
 
     res.status(200).json({
@@ -733,8 +747,6 @@ exports.logoutAllDevices = async (req, res) => {
 
     // Revoke all refresh tokens
     await RefreshToken.revokeAllUserTokens(req.user.id, 'user_logout');
-
-    // Terminate all sessions
     await LoginHistory.terminateAllSessions(req.user.id, 'user_logout');
 
     res.status(200).json({
@@ -877,7 +889,7 @@ exports.changePassword = async (req, res) => {
     user.passwordChangedAt = Date.now();
     await user.save();
 
-    // Revoke all other refresh tokens (keep current session)
+    // Revoke all other refresh tokens
     await RefreshToken.updateMany(
       {
         userId: req.user.id,
@@ -903,7 +915,7 @@ exports.changePassword = async (req, res) => {
 };
 
 // ========================
-// 17. VERIFY OTP (EXISTING - KEEP AS IS)
+// 17. VERIFY OTP
 // ========================
 
 exports.verifyOTP = async (req, res) => {
@@ -952,7 +964,7 @@ exports.verifyOTP = async (req, res) => {
 };
 
 // ========================
-// 18. RESEND OTP (EXISTING - KEEP AS IS)
+// 18. RESEND OTP
 // ========================
 
 exports.resendOTP = async (req, res) => {
@@ -988,7 +1000,7 @@ exports.resendOTP = async (req, res) => {
 };
 
 // ========================
-// 19. GET CURRENT USER (EXISTING - KEEP AS IS)
+// 19. GET CURRENT USER
 // ========================
 
 exports.getMe = async (req, res) => {
@@ -1003,11 +1015,11 @@ exports.getMe = async (req, res) => {
         email: user.email,
         phone: user.phoneFormatted,
         role: {
-          name: user.role.name,
+          name: user.role.name, // 🔥 Already lowercase
           displayName: user.role.displayName,
           level: user.role.level,
         },
-        profilePicture: user.profilePicture.url,
+        profilePicture: user.profilePicture?.url,
         address: user.fullAddress,
         assignedStall: user.assignedStall,
         phoneVerified: user.phoneVerified,
@@ -1023,7 +1035,7 @@ exports.getMe = async (req, res) => {
 };
 
 // ========================
-// 20. LOGOUT (EXISTING - ENHANCED)
+// 20. LOGOUT
 // ========================
 
 exports.logout = async (req, res) => {
@@ -1067,7 +1079,7 @@ exports.logout = async (req, res) => {
 };
 
 // ========================
-// HELPER FUNCTION EXPORTS
+// MODULE EXPORTS
 // ========================
 
 module.exports = {
@@ -1091,4 +1103,4 @@ module.exports = {
   resendOTP: exports.resendOTP,
   getMe: exports.getMe,
   logout: exports.logout,
-};
+}

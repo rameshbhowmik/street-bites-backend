@@ -1,4 +1,5 @@
-// backend/src/models/Stall.js
+// backend/src/models/Stall.js - FIXED VERSION
+
 const mongoose = require('mongoose');
 
 /**
@@ -20,8 +21,10 @@ const employeeAssignmentSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['Manager', 'Employee', 'Helper'],
-    required: true
+    // 🔥 FIXED: Lowercase enum values
+    enum: ['manager', 'employee', 'helper'],
+    required: true,
+    lowercase: true  // 🔥 Automatically convert to lowercase
   },
   assignedDate: {
     type: Date,
@@ -154,7 +157,6 @@ const stallSchema = new mongoose.Schema({
     maxlength: [100, 'নাম সর্বোচ্চ 100 অক্ষরের হতে পারে'],
     index: true
   },
-  
   stallCode: {
     type: String,
     required: [true, 'স্টল কোড প্রয়োজন'],
@@ -164,7 +166,6 @@ const stallSchema = new mongoose.Schema({
     match: [/^STL-\d{4}$/, 'স্টল কোড STL-XXXX ফরম্যাটে হতে হবে'],
     index: true
   },
-  
   stallType: {
     type: String,
     required: true,
@@ -174,13 +175,12 @@ const stallSchema = new mongoose.Schema({
     },
     default: 'permanent'
   },
-  
   description: {
     type: String,
     trim: true,
     maxlength: [500, 'বর্ণনা সর্বোচ্চ 500 অক্ষরের হতে পারে']
   },
-  
+
   // ঠিকানা - Address Information
   address: {
     fullAddress: {
@@ -228,7 +228,7 @@ const stallSchema = new mongoose.Schema({
       }
     }
   },
-  
+
   // মালিক ও ম্যানেজার - Owner & Manager
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -236,7 +236,6 @@ const stallSchema = new mongoose.Schema({
     required: [true, 'মালিক ID প্রয়োজন'],
     index: true
   },
-  
   assignedManager: {
     managerId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -254,10 +253,10 @@ const stallSchema = new mongoose.Schema({
     },
     assignedDate: Date
   },
-  
+
   // কর্মচারী তালিকা - Employee List
   employees: [employeeAssignmentSchema],
-  
+
   // Production House সংযোগ - Production House Link
   linkedProductionHouse: {
     type: mongoose.Schema.Types.ObjectId,
@@ -265,20 +264,18 @@ const stallSchema = new mongoose.Schema({
     required: [true, 'Production House লিঙ্ক প্রয়োজন'],
     index: true
   },
-  
+
   // পরিচালনার সময় - Operating Hours
   operatingHours: [operatingHoursSchema],
-  
   defaultOpeningTime: {
     type: String,
     default: '09:00'
   },
-  
   defaultClosingTime: {
     type: String,
     default: '21:00'
   },
-  
+
   // স্ট্যাটাস - Status
   currentStatus: {
     type: String,
@@ -286,7 +283,7 @@ const stallSchema = new mongoose.Schema({
     default: 'closed',
     index: true
   },
-  
+
   // স্টক তথ্য - Stock Information
   stockReference: {
     lastRefillDate: Date,
@@ -296,7 +293,7 @@ const stallSchema = new mongoose.Schema({
       default: 20
     }
   },
-  
+
   // বিক্রয় তথ্য - Sales Information
   salesSummary: {
     daily: salesSummarySchema,
@@ -310,7 +307,7 @@ const stallSchema = new mongoose.Schema({
       totalSales: { type: Number, default: 0 }
     }
   },
-  
+
   // আর্থিক তথ্য - Financial Information
   financial: {
     cashHandlingLimit: {
@@ -327,7 +324,7 @@ const stallSchema = new mongoose.Schema({
       default: true
     }
   },
-  
+
   // মান ও পরিদর্শন - Quality & Inspection
   qualityMetrics: {
     currentHygieneRating: {
@@ -339,7 +336,7 @@ const stallSchema = new mongoose.Schema({
     lastInspectionDate: Date,
     inspectionHistory: [inspectionRecordSchema]
   },
-  
+
   // অ্যালার্ট সেটিংস - Alert Settings
   alerts: {
     lowStockAlert: {
@@ -355,7 +352,7 @@ const stallSchema = new mongoose.Schema({
       },
       threshold: {
         type: Number,
-        default: 1000 // দৈনিক ন্যূনতম বিক্রয়
+        default: 1000
       }
     },
     employeeAbsenceAlert: {
@@ -365,7 +362,7 @@ const stallSchema = new mongoose.Schema({
       }
     }
   },
-  
+
   // পারফরমেন্স মেট্রিক্স - Performance Metrics
   performance: {
     customerRating: {
@@ -383,7 +380,7 @@ const stallSchema = new mongoose.Schema({
       default: 0
     }
   },
-  
+
   // অ্যাক্টিভ স্ট্যাটাস - Active Status
   isActive: {
     type: Boolean,
@@ -413,7 +410,6 @@ stallSchema.virtual('todaySales').get(function() {
   if (!this.salesSummary || !this.salesSummary.daily) return 0;
   const today = new Date().toDateString();
   const dailyDate = this.salesSummary.daily.date ? new Date(this.salesSummary.daily.date).toDateString() : null;
-  
   return dailyDate === today ? this.salesSummary.daily.totalSales : 0;
 });
 
@@ -440,32 +436,32 @@ stallSchema.pre('save', function(next) {
       closingTime: this.defaultClosingTime
     }));
   }
-  
+
   // Monthly average order value ক্যালকুলেশন
   if (this.salesSummary && this.salesSummary.monthly) {
     const monthlyOrders = this.salesSummary.monthly.totalOrders;
     const monthlySales = this.salesSummary.monthly.totalSales;
-    this.salesSummary.monthly.averageOrderValue = monthlyOrders > 0 
-      ? Math.round(monthlySales / monthlyOrders) 
+    this.salesSummary.monthly.averageOrderValue = monthlyOrders > 0
+      ? Math.round(monthlySales / monthlyOrders)
       : 0;
   }
-  
+
   next();
 });
 
 // Static Method - এরিয়া অনুযায়ী স্টল খুঁজুন
 stallSchema.statics.findByArea = function(area) {
-  return this.find({ 
-    'address.area': area, 
-    isActive: true 
+  return this.find({
+    'address.area': area,
+    isActive: true
   });
 };
 
 // Static Method - ওপেন স্টল খুঁজুন
 stallSchema.statics.findOpenStalls = function() {
-  return this.find({ 
-    currentStatus: 'open', 
-    isActive: true 
+  return this.find({
+    currentStatus: 'open',
+    isActive: true
   });
 };
 
@@ -509,14 +505,12 @@ stallSchema.methods.addEmployee = function(employeeData) {
 
 // Instance Method - কর্মচারী অপসারণ করুন
 stallSchema.methods.removeEmployee = function(employeeId) {
-  const employee = this.employees.find(emp => 
+  const employee = this.employees.find(emp =>
     emp.employeeId.toString() === employeeId.toString()
   );
-  
   if (employee) {
     employee.isActive = false;
   }
-  
   return this.save();
 };
 
@@ -526,7 +520,7 @@ stallSchema.methods.updateDailySales = function(salesData) {
     ...salesData,
     date: new Date()
   };
-  
+
   // Monthly এবং Yearly তে যোগ করুন
   if (!this.salesSummary.monthly) {
     this.salesSummary.monthly = { totalOrders: 0, totalSales: 0 };
@@ -534,12 +528,12 @@ stallSchema.methods.updateDailySales = function(salesData) {
   if (!this.salesSummary.yearly) {
     this.salesSummary.yearly = { totalOrders: 0, totalSales: 0 };
   }
-  
+
   this.salesSummary.monthly.totalOrders += salesData.totalOrders || 0;
   this.salesSummary.monthly.totalSales += salesData.totalSales || 0;
   this.salesSummary.yearly.totalOrders += salesData.totalOrders || 0;
   this.salesSummary.yearly.totalSales += salesData.totalSales || 0;
-  
+
   return this.save();
 };
 
@@ -549,10 +543,8 @@ stallSchema.methods.addInspection = function(inspectionData) {
     ...inspectionData,
     inspectionDate: new Date()
   });
-  
   this.qualityMetrics.currentHygieneRating = inspectionData.hygieneRating;
   this.qualityMetrics.lastInspectionDate = new Date();
-  
   return this.save();
 };
 

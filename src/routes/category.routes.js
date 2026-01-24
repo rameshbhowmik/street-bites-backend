@@ -1,14 +1,15 @@
-// backend/src/routes/category.routes.js
+// backend/src/routes/category.routes.js (Role Fixed)
 
 /**
  * Category Routes - ক্যাটাগরি রুটস
- * 
+ *
  * Features:
  * - Complete CRUD endpoints
  * - Image upload
  * - Category tree
  * - Authorization & validation
  * - 11 total endpoints
+ * ✅ Fixed: All roles are now lowercase for consistency
  */
 
 const express = require('express');
@@ -101,7 +102,7 @@ router.get(
 router.post(
   '/',
   authenticateToken,
-  authorizeRoles('Manager', 'Owner'),
+  authorizeRoles('manager', 'owner'), // ✅ FIXED: lowercase roles
   uploadImage('categoryImage'), // Single image upload
   [
     body('name')
@@ -145,7 +146,7 @@ router.post(
 router.put(
   '/:id',
   authenticateToken,
-  authorizeRoles('Manager', 'Owner'),
+  authorizeRoles('manager', 'owner'), // ✅ FIXED: lowercase roles
   [
     param('id').isMongoId().withMessage('সঠিক category ID প্রয়োজন'),
     body('name')
@@ -192,7 +193,7 @@ router.put(
 router.delete(
   '/:id',
   authenticateToken,
-  authorizeRoles('Owner'),
+  authorizeRoles('owner'), // ✅ FIXED: lowercase role
   [
     param('id').isMongoId().withMessage('সঠিক category ID প্রয়োজন'),
     validate
@@ -212,7 +213,7 @@ router.delete(
 router.post(
   '/:id/image',
   authenticateToken,
-  authorizeRoles('Manager', 'Owner'),
+  authorizeRoles('manager', 'owner'), // ✅ FIXED: lowercase roles
   uploadImage('categoryImage'), // Single image upload
   [
     param('id').isMongoId().withMessage('সঠিক category ID প্রয়োজন'),
@@ -233,7 +234,7 @@ router.post(
 router.patch(
   '/:id/update-count',
   authenticateToken,
-  authorizeRoles('Manager', 'Owner'),
+  authorizeRoles('manager', 'owner'), // ✅ FIXED: lowercase roles
   [
     param('id').isMongoId().withMessage('সঠিক category ID প্রয়োজন'),
     validate
@@ -249,7 +250,7 @@ router.patch(
 router.patch(
   '/:id/featured',
   authenticateToken,
-  authorizeRoles('Manager', 'Owner'),
+  authorizeRoles('manager', 'owner'), // ✅ FIXED: lowercase roles
   [
     param('id').isMongoId().withMessage('সঠিক category ID প্রয়োজন'),
     validate

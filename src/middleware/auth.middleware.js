@@ -1,4 +1,5 @@
 // backend/src/middleware/auth.middleware.js
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
@@ -64,14 +65,12 @@ exports.authenticateToken = async (req, res, next) => {
 
   } catch (error) {
     console.error('Auth Middleware Error:', error);
-    
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({
         success: false,
         message: 'Invalid token',
       });
     }
-    
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
@@ -113,8 +112,12 @@ exports.authorizeRoles = (...roles) => {
       userRole = req.user.role;
     }
 
-    // Check if user's role is in allowed roles
-    if (!roles.includes(userRole)) {
+    // Normalize to lowercase for comparison
+    const normalizedUserRole = userRole ? userRole.toLowerCase() : '';
+    const normalizedAllowedRoles = roles.map(role => role.toLowerCase());
+
+    // Check if user's role is in allowed roles (case-insensitive)
+    if (!normalizedAllowedRoles.includes(normalizedUserRole)) {
       return res.status(403).json({
         success: false,
         message: `এই কাজ শুধুমাত্র ${roles.join(', ')} করতে পারবে`,
@@ -168,9 +171,11 @@ exports.checkOwnership = (resourceKey = 'userId') => {
     const resourceId = req.params[resourceKey];
     const userId = req.user._id.toString();
 
-    // Admin roles can access any resource
+    // Admin roles can access any resource (case-insensitive check)
     const userRole = typeof req.user.role === 'object' ? req.user.role.name : req.user.role;
-    if (['Owner', 'Manager'].includes(userRole)) {
+    const normalizedRole = userRole ? userRole.toLowerCase() : '';
+    
+    if (['owner', 'manager'].includes(normalizedRole)) {
       return next();
     }
 
@@ -206,10 +211,8 @@ exports.loginRateLimit = (req, res, next) => {
   }
 
   const attempts = loginAttempts.get(identifier);
-  
   // Remove old attempts
   const recentAttempts = attempts.filter(time => now - time < windowMs);
-  
   if (recentAttempts.length >= maxAttempts) {
     return res.status(429).json({
       success: false,

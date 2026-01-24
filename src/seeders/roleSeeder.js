@@ -1,4 +1,4 @@
-// backend/src/seeders/roleSeeder.js
+// backend/src/seeders/roleSeeder.js - FIXED VERSION
 
 const Role = require('../models/Role');
 const mongoose = require('mongoose');
@@ -6,12 +6,12 @@ require('dotenv').config();
 
 // ========================
 // DEFAULT ROLES - Street Bites
-// ⭐ IMPORTANT: Capital Case format (Owner, Manager, etc.)
+// 🔥 UPDATED: All lowercase for database consistency
 // ========================
 
 const defaultRoles = [
   {
-    name: 'Owner', // ⭐ Capital Case (not OWNER)
+    name: 'owner', // 🔥 lowercase (database এ এভাবে store হবে)
     displayName: 'মালিক',
     description: 'সম্পূর্ণ সিস্টেমের নিয়ন্ত্রণ',
     level: 100,
@@ -31,7 +31,7 @@ const defaultRoles = [
     isActive: true,
   },
   {
-    name: 'Investor', // ⭐ Capital Case (not INVESTOR)
+    name: 'investor', // 🔥 lowercase
     displayName: 'বিনিয়োগকারী',
     description: 'লাভ-ক্ষতি দেখতে পারবেন',
     level: 80,
@@ -51,12 +51,12 @@ const defaultRoles = [
     isActive: true,
   },
   {
-    name: 'Manager', // ⭐ Capital Case (not MANAGER)
+    name: 'manager', // 🔥 lowercase
     displayName: 'ম্যানেজার',
     description: 'উৎপাদন এবং স্টল ব্যবস্থাপনা',
     level: 70,
     permissions: {
-      users: { create: true, read: true, update: true, delete: false, viewAll: true }, // ⭐ Manager can create users
+      users: { create: true, read: true, update: true, delete: false, viewAll: true },
       roles: { create: false, read: true, update: false, delete: false },
       products: { create: true, read: true, update: true, delete: false, manageStock: true, setPrice: true },
       categories: { create: true, read: true, update: true, delete: false },
@@ -71,7 +71,7 @@ const defaultRoles = [
     isActive: true,
   },
   {
-    name: 'Employee', // ⭐ Capital Case (not EMPLOYEE)
+    name: 'employee', // 🔥 lowercase
     displayName: 'কর্মচারী',
     description: 'POS এবং বিক্রয় এন্ট্রি',
     level: 50,
@@ -91,7 +91,7 @@ const defaultRoles = [
     isActive: true,
   },
   {
-    name: 'Delivery_Person', // ⭐ Capital Case with underscore (not DELIVERY_PERSON)
+    name: 'delivery_person', // 🔥 lowercase with underscore
     displayName: 'ডেলিভারি ব্যক্তি',
     description: 'অর্ডার ডেলিভারি',
     level: 40,
@@ -111,7 +111,7 @@ const defaultRoles = [
     isActive: true,
   },
   {
-    name: 'Customer', // ⭐ Capital Case (not CUSTOMER)
+    name: 'customer', // 🔥 lowercase
     displayName: 'গ্রাহক',
     description: 'অর্ডার প্লেস করবেন',
     level: 10,
@@ -154,14 +154,19 @@ const seedRoles = async () => {
     // Roles list দেখানো
     const roles = await Role.find().sort({ level: -1 });
     console.log('\n📋 Created Roles:');
-    console.log('═'.repeat(60));
+    console.log('═'.repeat(70));
+    console.log('  Level | Name                 | Display Name');
+    console.log('═'.repeat(70));
     roles.forEach((role) => {
-      console.log(`  ${role.level.toString().padStart(3)} | ${role.name.padEnd(20)} | ${role.displayName}`);
+      console.log(`  ${role.level.toString().padStart(5)} | ${role.name.padEnd(20)} | ${role.displayName}`);
     });
-    console.log('═'.repeat(60));
+    console.log('═'.repeat(70));
 
     console.log('\n✅ Role seeding completed successfully!');
-    console.log('🎉 You can now use these roles in your application\n');
+    console.log('🎉 You can now use these roles in your application');
+    console.log('\n📝 Available roles (case-insensitive):');
+    console.log('   - owner, investor, manager, employee, delivery_person, customer');
+    console.log('   - All inputs (OWNER, Owner, owner) will work!\n');
 
     process.exit(0);
   } catch (error) {
@@ -177,4 +182,5 @@ seedRoles();
 // ========================
 // USAGE
 // ========================
-// Terminal এ run করুন: node src/seeders/roleSeeder.js
+// Terminal এ run করুন: node backend/src/seeders/roleSeeder.js
+// অথবা: npm run seed:roles (যদি package.json এ script যুক্ত থাকে)

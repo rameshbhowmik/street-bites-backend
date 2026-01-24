@@ -1,4 +1,4 @@
-// backend/src/controllers/userController.js
+// backend/src/controllers/userController.js - FIXED VERSION
 
 const User = require('../models/User');
 const Role = require('../models/Role');
@@ -23,6 +23,7 @@ const getAllUsers = async (req, res) => {
 
     const query = {};
 
+    // 🔥 FIXED: Role search with case-insensitive
     if (role) {
       const roleDoc = await Role.findByName(role);
       if (roleDoc) {
@@ -113,9 +114,10 @@ const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // 🔥 FIXED: Lowercase role comparison
     if (
       req.user.id !== id &&
-      !['Owner', 'Manager'].includes(req.user.role.name)
+      !['owner', 'manager'].includes(req.user.role.name.toLowerCase())
     ) {
       return res.status(403).json({
         success: false,
@@ -199,7 +201,8 @@ const createUser = async (req, res) => {
       });
     }
 
-    const role = await Role.findByName(roleName || 'Customer');
+    // 🔥 FIXED: Use findByName which handles case-insensitive
+    const role = await Role.findByName(roleName || 'customer');
     if (!role) {
       return res.status(400).json({
         success: false,
@@ -272,7 +275,8 @@ const updateUser = async (req, res) => {
     }
 
     const isSelf = req.user.id === id;
-    const isAdmin = ['Owner', 'Manager'].includes(req.user.role.name);
+    // 🔥 FIXED: Lowercase role comparison
+    const isAdmin = ['owner', 'manager'].includes(req.user.role.name.toLowerCase());
 
     if (!isSelf && !isAdmin) {
       return res.status(403).json({
@@ -350,6 +354,7 @@ const updateUser = async (req, res) => {
       }
     }
 
+    // 🔥 FIXED: Use findByName for case-insensitive role search
     if (filteredUpdates.role && isAdmin) {
       const roleDoc = await Role.findByName(filteredUpdates.role);
       if (!roleDoc) {
@@ -408,7 +413,8 @@ const deleteUser = async (req, res) => {
     }
 
     const userRole = await Role.findById(user.role);
-    if (userRole.name === 'Owner') {
+    // 🔥 FIXED: Lowercase comparison
+    if (userRole.name.toLowerCase() === 'owner') {
       return res.status(403).json({
         success: false,
         message: 'Owner একাউন্ট মুছে ফেলা যাবে না'
@@ -546,11 +552,6 @@ const uploadProfileImage = async (req, res) => {
 // 9. DELETE PROFILE IMAGE
 // ============================================
 
-/**
- * প্রোফাইল ছবি মুছে ফেলুন
- * DELETE /api/profile/delete-image
- * Access: All authenticated users
- */
 const deleteProfileImage = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -562,7 +563,6 @@ const deleteProfileImage = async (req, res) => {
       });
     }
 
-    // Check if user has profile picture
     if (!user.profilePicture || !user.profilePicture.url) {
       return res.status(400).json({
         success: false,
@@ -570,7 +570,6 @@ const deleteProfileImage = async (req, res) => {
       });
     }
 
-    // Delete from Cloudinary if publicId exists
     if (user.profilePicture.publicId) {
       try {
         const cloudinary = require('cloudinary').v2;
@@ -578,11 +577,9 @@ const deleteProfileImage = async (req, res) => {
         console.log('✅ Profile picture deleted from Cloudinary');
       } catch (cloudinaryError) {
         console.error('❌ Cloudinary deletion error:', cloudinaryError);
-        // Continue anyway - remove from database even if Cloudinary fails
       }
     }
 
-    // Remove from database
     user.profilePicture = {
       url: '',
       publicId: ''
@@ -615,8 +612,9 @@ const getAllEmployees = async (req, res) => {
   try {
     const { page = 1, limit = 20, stallId, isActive = true } = req.query;
 
-    const employeeRole = await Role.findByName('Employee');
-    const deliveryRole = await Role.findByName('Delivery_Person');
+    // 🔥 FIXED: Use findByName (case-insensitive)
+    const employeeRole = await Role.findByName('employee');
+    const deliveryRole = await Role.findByName('delivery_person');
 
     const query = {
       role: { $in: [employeeRole._id, deliveryRole._id] },
@@ -670,7 +668,8 @@ const getAllInvestors = async (req, res) => {
   try {
     const { page = 1, limit = 20, isActive = true } = req.query;
 
-    const investorRole = await Role.findByName('Investor');
+    // 🔥 FIXED: Use findByName (case-insensitive)
+    const investorRole = await Role.findByName('investor');
     const query = {
       role: investorRole._id,
       isActive: isActive === 'true'
@@ -735,7 +734,8 @@ const assignStallToEmployee = async (req, res) => {
     }
 
     const userRole = await Role.findById(user.role);
-    if (!['Employee', 'Delivery_Person'].includes(userRole.name)) {
+    // 🔥 FIXED: Lowercase comparison
+    if (!['employee', 'delivery_person'].includes(userRole.name.toLowerCase())) {
       return res.status(400).json({
         success: false,
         message: 'এই ইউজার কর্মচারী নয়'
@@ -780,7 +780,8 @@ const toggleBlockUser = async (req, res) => {
     }
 
     const userRole = await Role.findById(user.role);
-    if (userRole.name === 'Owner') {
+    // 🔥 FIXED: Lowercase comparison
+    if (userRole.name.toLowerCase() === 'owner') {
       return res.status(403).json({
         success: false,
         message: 'Owner কে ব্লক করা যাবে না'
@@ -889,7 +890,7 @@ const getUserStatistics = async (req, res) => {
 };
 
 // ============================================
-// MODULE EXPORTS - সঠিক format
+// MODULE EXPORTS
 // ============================================
 
 module.exports = {

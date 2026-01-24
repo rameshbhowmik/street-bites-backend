@@ -1,15 +1,16 @@
-// backend/src/models/Product.js (UPDATED VERSION)
+// backend/src/models/Product.js (UPDATED VERSION - Role Fixed)
 
 /**
  * Product Schema - প্রোডাক্ট স্কিমা (Updated with Multiple Images)
  * Street Bites প্রজেক্টের জন্য সম্পূর্ণ প্রোডাক্ট ম্যানেজমেন্ট
- * 
+ *
  * ✅ CHANGES FROM PREVIOUS VERSION:
  * - productImage (single) → images (multiple)
  * - Added categoryId reference to Category model
  * - Added featured products support
  * - Added image compression tracking
  * - Enhanced image management
+ * - ✅ Fixed userRole case-sensitivity issue
  */
 
 const mongoose = require('mongoose');
@@ -172,7 +173,7 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'বিক্রয় মূল্য প্রয়োজন'],
     min: [0, 'মূল্য ০ বা তার বেশি হতে হবে'],
-    index: true // ⚠️ Removed duplicate index definition
+    index: true
   },
 
   costPrice: {
@@ -333,8 +334,11 @@ const productSchema = new mongoose.Schema({
     },
     userRole: {
       type: String,
-      enum: ['Owner', 'Manager', 'Admin'],
-      required: true
+      // ✅ FIXED: lowercase রোল যোগ করা হয়েছে (case-insensitive support)
+      enum: ['Owner', 'Manager', 'owner', 'manager'],
+      required: true,
+      // ✅ NEW: Normalize to lowercase before saving
+      set: val => val ? val.toLowerCase() : val
     }
   },
 
@@ -355,7 +359,6 @@ const productSchema = new mongoose.Schema({
 // ============================================
 
 productSchema.index({ productName: 'text', description: 'text' }); // Text search
-// ⚠️ REMOVED duplicate: productSchema.index({ sellingPrice: 1 }); 
 productSchema.index({ averageRating: -1 }); // Rating sorting
 productSchema.index({ totalSold: -1 }); // Popularity sorting
 productSchema.index({ createdAt: -1 }); // Latest products
@@ -397,7 +400,6 @@ productSchema.virtual('primaryImage').get(function() {
       publicId: null
     };
   }
-  
   const primary = this.images.find(img => img.isPrimary);
   return primary || this.images[0];
 });
@@ -467,11 +469,11 @@ productSchema.statics.findByStall = function(stallId) {
 
 // ✅ NEW: Find by category
 productSchema.statics.findByCategory = function(categoryId, options = {}) {
-  return this.find({ 
-    categoryId, 
+  return this.find({
+    categoryId,
     isActive: true,
     isAvailable: true,
-    ...options 
+    ...options
   }).populate('categoryId');
 };
 
@@ -495,11 +497,9 @@ productSchema.methods.updateStock = function(quantity, operation = 'add') {
   } else if (operation === 'subtract') {
     this.availableStock = Math.max(0, this.availableStock - quantity);
   }
-  
   if (this.availableStock === 0) {
     this.isAvailable = false;
   }
-  
   return this.save();
 };
 
@@ -514,32 +514,26 @@ productSchema.methods.addImage = function(imageData) {
   if (this.images.length >= 5) {
     throw new Error('সর্বোচ্চ ৫টি ছবি আপলোড করতে পারবেন');
   }
-  
   this.images.push({
     ...imageData,
     displayOrder: this.images.length,
     isPrimary: this.images.length === 0
   });
-  
   return this.save();
 };
 
 // ✅ NEW: Remove image
 productSchema.methods.removeImage = function(publicId) {
   const index = this.images.findIndex(img => img.publicId === publicId);
-  
   if (index === -1) {
     throw new Error('ছবি পাওয়া যায়নি');
   }
-  
   const wasPrimary = this.images[index].isPrimary;
   this.images.splice(index, 1);
-  
   // If removed image was primary, make first image primary
   if (wasPrimary && this.images.length > 0) {
     this.images[0].isPrimary = true;
   }
-  
   return this.save();
 };
 
@@ -548,7 +542,6 @@ productSchema.methods.setPrimaryImage = function(publicId) {
   this.images.forEach(img => {
     img.isPrimary = img.publicId === publicId;
   });
-  
   return this.save();
 };
 

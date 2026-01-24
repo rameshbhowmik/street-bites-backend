@@ -1,4 +1,12 @@
-// backend/src/routes/stallPerformance.routes.js
+// backend/src/routes/stallPerformance.routes.js (Fixed)
+
+/**
+ * Stall Performance Routes
+ * ✅ Fixed: Route order corrected (specific routes before parameterized)
+ * ✅ Fixed: Using correct middleware names (authenticateToken, authorizeRoles)
+ * ✅ Fixed: All roles are lowercase
+ */
+
 const express = require('express');
 const router = express.Router();
 const {
@@ -17,57 +25,174 @@ const {
   deletePerformanceReport
 } = require('../controllers/stallPerformanceController');
 
-const { protect, authorize } = require('../middleware/auth.middleware');
+// ✅ FIXED: Using correct middleware names
+const { authenticateToken, authorizeRoles } = require('../middleware/auth.middleware');
 
-// ============ পাবলিক রুটস ============
-// (কোনো পাবলিক রুট নেই - সব protected)
+// ============================================
+// ALL ROUTES REQUIRE AUTHENTICATION
+// ============================================
+router.use(authenticateToken);
 
-// ============ প্রোটেক্টেড রুটস ============
-// সব রুট authenticate করা প্রয়োজন
-router.use(protect);
+// ============================================
+// SPECIFIC ROUTES (Must come BEFORE parameterized routes)
+// ============================================
 
-// বেসিক CRUD operations
-router
-  .route('/')
-  .get(getAllPerformanceReports) // সব রিপোর্ট দেখুন
-  .post(authorize('manager', 'owner'), createPerformanceReport); // নতুন রিপোর্ট তৈরি
+/**
+ * @route   GET /api/stall-performance/top-performing
+ * @desc    Get top performing stalls
+ * @access  Protected (All authenticated users)
+ */
+router.get('/top-performing', getTopPerformingStalls);
 
-router
-  .route('/:id')
-  .get(getPerformanceReportById) // নির্দিষ্ট রিপোর্ট দেখুন
-  .put(authorize('manager', 'owner'), updatePerformanceReport) // রিপোর্ট আপডেট
-  .delete(authorize('owner'), deletePerformanceReport); // রিপোর্ট মুছুন
+/**
+ * @route   GET /api/stall-performance/low-performing
+ * @desc    Get low performing stalls
+ * @access  Manager, Owner
+ */
+router.get(
+  '/low-performing',
+  authorizeRoles('manager', 'owner'), // ✅ FIXED: lowercase roles
+  getLowPerformingStalls
+);
 
-// বিশেষ query routes
-router.get('/stall/:stallId', getStallPerformance); // স্টল-ওয়াইজ পারফরম্যান্স
-router.get('/top-performing', getTopPerformingStalls); // টপ পারফর্মিং স্টল
-router.get('/low-performing', authorize('manager', 'owner'), getLowPerformingStalls); // লো পারফর্মিং
-router.get('/high-wastage', authorize('manager', 'owner'), getHighWastageStalls); // হাই ওয়েস্টেজ
+/**
+ * @route   GET /api/stall-performance/high-wastage
+ * @desc    Get high wastage stalls
+ * @access  Manager, Owner
+ */
+router.get(
+  '/high-wastage',
+  authorizeRoles('manager', 'owner'), // ✅ FIXED: lowercase roles
+  getHighWastageStalls
+);
 
-// রিপোর্ট ম্যানেজমেন্ট
-router.post('/:id/complaint', addComplaint); // কমপ্লেইন যোগ
-router.post('/:id/action-item', authorize('manager', 'owner'), addActionItem); // অ্যাকশন আইটেম
-router.put('/:id/submit', authorize('manager'), submitReport); // রিপোর্ট সাবমিট
-router.put('/:id/review', authorize('owner'), reviewReport); // রিপোর্ট রিভিউ
+/**
+ * @route   GET /api/stall-performance/stall/:stallId
+ * @desc    Get performance for a specific stall
+ * @access  Protected (All authenticated users)
+ */
+router.get('/stall/:stallId', getStallPerformance);
+
+// ============================================
+// BASIC CRUD OPERATIONS
+// ============================================
+
+/**
+ * @route   GET /api/stall-performance
+ * @desc    Get all performance reports (with filters)
+ * @access  Protected (All authenticated users)
+ */
+router.get('/', getAllPerformanceReports);
+
+/**
+ * @route   POST /api/stall-performance
+ * @desc    Create new performance report
+ * @access  Manager, Owner
+ */
+router.post(
+  '/',
+  authorizeRoles('manager', 'owner'), // ✅ FIXED: lowercase roles
+  createPerformanceReport
+);
+
+// ============================================
+// PARAMETERIZED ROUTES (Must come AFTER specific routes)
+// ============================================
+
+/**
+ * @route   POST /api/stall-performance/:id/complaint
+ * @desc    Add complaint to performance report
+ * @access  Protected (All authenticated users)
+ */
+router.post('/:id/complaint', addComplaint);
+
+/**
+ * @route   POST /api/stall-performance/:id/action-item
+ * @desc    Add action item to performance report
+ * @access  Manager, Owner
+ */
+router.post(
+  '/:id/action-item',
+  authorizeRoles('manager', 'owner'), // ✅ FIXED: lowercase roles
+  addActionItem
+);
+
+/**
+ * @route   PUT /api/stall-performance/:id/submit
+ * @desc    Submit performance report
+ * @access  Manager
+ */
+router.put(
+  '/:id/submit',
+  authorizeRoles('manager'), // ✅ FIXED: lowercase role
+  submitReport
+);
+
+/**
+ * @route   PUT /api/stall-performance/:id/review
+ * @desc    Review performance report
+ * @access  Owner
+ */
+router.put(
+  '/:id/review',
+  authorizeRoles('owner'), // ✅ FIXED: lowercase role
+  reviewReport
+);
+
+/**
+ * @route   GET /api/stall-performance/:id
+ * @desc    Get single performance report by ID
+ * @access  Protected (All authenticated users)
+ */
+router.get('/:id', getPerformanceReportById);
+
+/**
+ * @route   PUT /api/stall-performance/:id
+ * @desc    Update performance report
+ * @access  Manager, Owner
+ */
+router.put(
+  '/:id',
+  authorizeRoles('manager', 'owner'), // ✅ FIXED: lowercase roles
+  updatePerformanceReport
+);
+
+/**
+ * @route   DELETE /api/stall-performance/:id
+ * @desc    Delete performance report
+ * @access  Owner only
+ */
+router.delete(
+  '/:id',
+  authorizeRoles('owner'), // ✅ FIXED: lowercase role
+  deletePerformanceReport
+);
 
 module.exports = router;
 
 /**
- * API Endpoints Summary:
- * 
- * GET    /api/stall-performance                     - সব রিপোর্ট দেখুন (query: stallId, period, startDate, endDate)
- * POST   /api/stall-performance                     - নতুন রিপোর্ট তৈরি (Manager, Owner)
- * GET    /api/stall-performance/:id                 - নির্দিষ্ট রিপোর্ট দেখুন
- * PUT    /api/stall-performance/:id                 - রিপোর্ট আপডেট (Manager, Owner)
- * DELETE /api/stall-performance/:id                 - রিপোর্ট মুছুন (Owner)
- * 
- * GET    /api/stall-performance/stall/:stallId      - স্টল-ওয়াইজ পারফরম্যান্স
- * GET    /api/stall-performance/top-performing      - টপ পারফর্মিং স্টল
- * GET    /api/stall-performance/low-performing      - লো পারফর্মিং স্টল (Manager, Owner)
- * GET    /api/stall-performance/high-wastage        - হাই ওয়েস্টেজ স্টল (Manager, Owner)
- * 
- * POST   /api/stall-performance/:id/complaint       - কমপ্লেইন যোগ করুন
- * POST   /api/stall-performance/:id/action-item     - অ্যাকশন আইটেম যোগ (Manager, Owner)
- * PUT    /api/stall-performance/:id/submit          - রিপোর্ট সাবমিট (Manager)
- * PUT    /api/stall-performance/:id/review          - রিপোর্ট রিভিউ (Owner)
+ * ============================================
+ * API ENDPOINTS SUMMARY (CORRECT ORDER)
+ * ============================================
+ *
+ * ============ Protected (All Authenticated Users) ============
+ * GET    /api/stall-performance                     - Get all reports
+ * GET    /api/stall-performance/:id                 - Get single report
+ * GET    /api/stall-performance/top-performing      - Get top performing stalls
+ * GET    /api/stall-performance/stall/:stallId      - Get stall performance
+ * POST   /api/stall-performance/:id/complaint       - Add complaint
+ *
+ * ============ Manager & Owner ============
+ * POST   /api/stall-performance                     - Create new report
+ * PUT    /api/stall-performance/:id                 - Update report
+ * GET    /api/stall-performance/low-performing      - Get low performing stalls
+ * GET    /api/stall-performance/high-wastage        - Get high wastage stalls
+ * POST   /api/stall-performance/:id/action-item     - Add action item
+ *
+ * ============ Manager Only ============
+ * PUT    /api/stall-performance/:id/submit          - Submit report
+ *
+ * ============ Owner Only ============
+ * DELETE /api/stall-performance/:id                 - Delete report
+ * PUT    /api/stall-performance/:id/review          - Review report
  */

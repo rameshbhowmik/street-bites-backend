@@ -1,4 +1,5 @@
-// backend/src/models/Transaction.js
+// backend/src/models/Transaction.js - FIXED VERSION
+
 const mongoose = require('mongoose');
 
 /**
@@ -9,38 +10,35 @@ const transactionSchema = new mongoose.Schema({
   // ============================================
   // মৌলিক তথ্য (Basic Information)
   // ============================================
-  
   transactionId: {
     type: String,
     unique: true,
     required: [true, 'ট্রানজেকশন আইডি প্রয়োজন']
-    // Format: TXN-YYYYMMDD-XXXX
   },
 
   referenceNumber: {
     type: String,
     unique: true,
-    sparse: true // Allows multiple null values
+    sparse: true
   },
 
   // ============================================
   // ট্রানজেকশন টাইপ (Transaction Type)
   // ============================================
-  
   transactionType: {
     type: String,
     enum: [
-      'sale',           // বিক্রয়
-      'expense',        // খরচ
-      'investment',     // বিনিয়োগ
-      'refund',         // ফেরত
-      'salary',         // বেতন
-      'purchase',       // ক্রয়
-      'withdrawal',     // উত্তোলন
-      'deposit',        // জমা
-      'transfer',       // স্থানান্তর
-      'dividend',       // লভ্যাংশ
-      'other'           // অন্যান্য
+      'sale',
+      'expense',
+      'investment',
+      'refund',
+      'salary',
+      'purchase',
+      'withdrawal',
+      'deposit',
+      'transfer',
+      'dividend',
+      'other'
     ],
     required: [true, 'ট্রানজেকশন টাইপ নির্বাচন করুন'],
     index: true
@@ -49,12 +47,9 @@ const transactionSchema = new mongoose.Schema({
   transactionCategory: {
     type: String,
     enum: [
-      // Income categories
       'product-sale',
       'service-income',
       'investment-received',
-      
-      // Expense categories
       'raw-material',
       'staff-salary',
       'rent',
@@ -66,8 +61,6 @@ const transactionSchema = new mongoose.Schema({
       'equipment-purchase',
       'license-fee',
       'insurance',
-      
-      // Other categories
       'customer-refund',
       'supplier-payment',
       'investor-dividend',
@@ -81,7 +74,6 @@ const transactionSchema = new mongoose.Schema({
   // ============================================
   // আর্থিক তথ্য (Financial Details)
   // ============================================
-  
   amount: {
     type: Number,
     required: [true, 'পরিমাণ প্রয়োজন'],
@@ -119,7 +111,6 @@ const transactionSchema = new mongoose.Schema({
   // ============================================
   // সম্পর্কিত এন্টিটি (Related Entity)
   // ============================================
-  
   relatedEntity: {
     entityType: {
       type: String,
@@ -137,17 +128,14 @@ const transactionSchema = new mongoose.Schema({
       ],
       default: 'none'
     },
-    
     entityId: {
       type: mongoose.Schema.Types.ObjectId,
       refPath: 'relatedEntity.entityModel'
     },
-    
     entityModel: {
       type: String,
       enum: ['Order', 'Expense', 'User', 'Supplier', 'Stall', 'ProductionHouse']
     },
-    
     entityName: String,
     entityReference: String
   },
@@ -155,38 +143,31 @@ const transactionSchema = new mongoose.Schema({
   // ============================================
   // পেমেন্ট ইনফরমেশন (Payment Information)
   // ============================================
-  
   payment: {
     paymentMode: {
       type: String,
       enum: ['cash', 'upi', 'card', 'bank-transfer', 'cheque', 'wallet', 'other'],
       required: [true, 'পেমেন্ট মোড নির্বাচন করুন']
     },
-    
     paymentStatus: {
       type: String,
       enum: ['pending', 'completed', 'failed', 'cancelled', 'refunded'],
       default: 'completed',
       index: true
     },
-    
     paymentReference: {
       type: String,
       trim: true
     },
-    
     utrNumber: {
-      type: String, // Unique Transaction Reference (for bank transfers)
+      type: String,
       trim: true
     },
-    
     chequeNumber: {
       type: String,
       trim: true
     },
-    
     chequeClearDate: Date,
-    
     bankDetails: {
       bankName: String,
       accountNumber: String,
@@ -198,7 +179,6 @@ const transactionSchema = new mongoose.Schema({
   // ============================================
   // পার্টিজ ইনফরমেশন (Parties Information)
   // ============================================
-  
   paidBy: {
     partyType: {
       type: String,
@@ -217,7 +197,7 @@ const transactionSchema = new mongoose.Schema({
       type: String,
       validate: {
         validator: function(v) {
-          if (!v) return true; // Optional field
+          if (!v) return true;
           return /^[6-9]\d{9}$/.test(v);
         },
         message: 'সঠিক ইন্ডিয়ান মোবাইল নম্বর দিন (10 digits, 6-9 দিয়ে শুরু)'
@@ -253,20 +233,17 @@ const transactionSchema = new mongoose.Schema({
   // ============================================
   // লোকেশন রেফারেন্স (Location Reference)
   // ============================================
-  
   location: {
     stallId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Stall'
     },
     stallName: String,
-    
     productionHouseId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'ProductionHouse'
     },
     productionHouseName: String,
-    
     businessUnit: {
       type: String,
       enum: ['stall-operations', 'production', 'central-office', 'warehouse', 'other'],
@@ -277,7 +254,6 @@ const transactionSchema = new mongoose.Schema({
   // ============================================
   // বিবরণ ও মন্তব্য (Description & Comments)
   // ============================================
-  
   transactionDescription: {
     type: String,
     required: [true, 'ট্রানজেকশন বিবরণ প্রয়োজন'],
@@ -302,13 +278,11 @@ const transactionSchema = new mongoose.Schema({
   // ============================================
   // অ্যাডজাস্টমেন্ট ইনফরমেশন (Adjustment Info)
   // ============================================
-  
   adjustment: {
     isAdjustment: {
       type: Boolean,
       default: false
     },
-    
     adjustmentReason: {
       type: String,
       enum: [
@@ -321,28 +295,28 @@ const transactionSchema = new mongoose.Schema({
         'other'
       ]
     },
-    
     adjustmentRemarks: String,
-    
     linkedOriginalTransaction: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Transaction'
     },
-    
+    // 🔥 FIXED: userRole lowercase
     adjustmentApprovedBy: {
       userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
       },
       userName: String,
-      userRole: String
+      userRole: {
+        type: String,
+        lowercase: true
+      }
     }
   },
 
   // ============================================
   // ট্রানজেকশন তারিখ ও সময় (Date & Time)
   // ============================================
-  
   transactionDate: {
     type: Date,
     required: [true, 'ট্রানজেকশন তারিখ প্রয়োজন'],
@@ -351,14 +325,14 @@ const transactionSchema = new mongoose.Schema({
   },
 
   transactionTime: {
-    type: String, // Format: HH:MM (24-hour)
+    type: String,
     required: true
   },
 
   // ============================================
   // রেকর্ড ইনফরমেশন (Record Information)
   // ============================================
-  
+  // 🔥 FIXED: userRole lowercase
   recordedBy: {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -371,14 +345,14 @@ const transactionSchema = new mongoose.Schema({
     },
     userRole: {
       type: String,
-      required: true
+      required: true,
+      lowercase: true
     }
   },
 
   // ============================================
   // ট্রানজেকশন স্ট্যাটাস (Transaction Status)
   // ============================================
-  
   transactionStatus: {
     type: String,
     enum: ['active', 'reversed', 'cancelled', 'on-hold'],
@@ -386,6 +360,7 @@ const transactionSchema = new mongoose.Schema({
     index: true
   },
 
+  // 🔥 FIXED: userRole lowercase
   reversalDetails: {
     isReversed: {
       type: Boolean,
@@ -395,7 +370,10 @@ const transactionSchema = new mongoose.Schema({
     reversedBy: {
       userId: mongoose.Schema.Types.ObjectId,
       userName: String,
-      userRole: String
+      userRole: {
+        type: String,
+        lowercase: true
+      }
     },
     reversalReason: String,
     reversalTransactionId: {
@@ -407,34 +385,32 @@ const transactionSchema = new mongoose.Schema({
   // ============================================
   // অনুমোদন ইনফরমেশন (Approval Information)
   // ============================================
-  
+  // 🔥 FIXED: userRole lowercase
   approval: {
     requiresApproval: {
       type: Boolean,
       default: false
     },
-    
     approvalStatus: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending'
     },
-    
     approvedBy: {
       userId: mongoose.Schema.Types.ObjectId,
       userName: String,
-      userRole: String
+      userRole: {
+        type: String,
+        lowercase: true
+      }
     },
-    
     approvedAt: Date,
-    
     rejectionReason: String
   },
 
   // ============================================
   // মেটা ইনফরমেশন (Meta Information)
   // ============================================
-  
   metadata: {
     fiscalYear: String,
     quarter: {
@@ -447,21 +423,17 @@ const transactionSchema = new mongoose.Schema({
       min: 1,
       max: 12
     },
-    
     isReconciled: {
       type: Boolean,
       default: false
     },
     reconciledAt: Date,
-    
     isAudited: {
       type: Boolean,
       default: false
     },
     auditedAt: Date,
-    
     tags: [String],
-    
     isTestTransaction: {
       type: Boolean,
       default: false
@@ -475,7 +447,7 @@ const transactionSchema = new mongoose.Schema({
 });
 
 // ============================================
-// Indexes - দ্রুত সার্চের জন্য
+// Indexes
 // ============================================
 
 transactionSchema.index({ transactionId: 1 });
@@ -487,16 +459,13 @@ transactionSchema.index({ 'location.stallId': 1, transactionDate: -1 });
 transactionSchema.index({ 'paidBy.partyId': 1 });
 transactionSchema.index({ 'receivedBy.partyId': 1 });
 transactionSchema.index({ transactionDate: -1 });
-
-// Compound indexes
 transactionSchema.index({ transactionType: 1, transactionStatus: 1, transactionDate: -1 });
 transactionSchema.index({ 'location.stallId': 1, transactionType: 1, transactionDate: -1 });
 
 // ============================================
-// Virtual Fields - ক্যালকুলেটেড ফিল্ড
+// Virtual Fields
 // ============================================
 
-// Net amount (after tax)
 transactionSchema.virtual('netTransactionAmount').get(function() {
   if (this.taxDetails.taxAmount > 0) {
     return this.amount - this.taxDetails.taxAmount;
@@ -504,7 +473,6 @@ transactionSchema.virtual('netTransactionAmount').get(function() {
   return this.amount;
 });
 
-// Transaction type in Bangla
 transactionSchema.virtual('transactionTypeInBangla').get(function() {
   const typeMap = {
     'sale': 'বিক্রয়',
@@ -522,7 +490,6 @@ transactionSchema.virtual('transactionTypeInBangla').get(function() {
   return typeMap[this.transactionType] || this.transactionType;
 });
 
-// Payment status in Bangla
 transactionSchema.virtual('paymentStatusInBangla').get(function() {
   const statusMap = {
     'pending': 'অপেক্ষমাণ',
@@ -534,7 +501,6 @@ transactionSchema.virtual('paymentStatusInBangla').get(function() {
   return statusMap[this.payment.paymentStatus] || this.payment.paymentStatus;
 });
 
-// Transaction date in Bangla
 transactionSchema.virtual('transactionDateInBangla').get(function() {
   return new Date(this.transactionDate).toLocaleDateString('bn-IN', {
     year: 'numeric',
@@ -560,13 +526,13 @@ transactionSchema.pre('save', async function(next) {
     });
     this.transactionId = `TXN-${dateStr}-${String(count + 1).padStart(4, '0')}`;
   }
-  
+
   // Set transaction time if not provided
   if (!this.transactionTime) {
     const date = new Date(this.transactionDate);
     this.transactionTime = date.toTimeString().slice(0, 5);
   }
-  
+
   // Calculate net amount for tax
   if (this.taxDetails.taxPercentage > 0) {
     this.taxDetails.taxAmount = (this.amount * this.taxDetails.taxPercentage) / (100 + this.taxDetails.taxPercentage);
@@ -574,7 +540,7 @@ transactionSchema.pre('save', async function(next) {
   } else {
     this.taxDetails.netAmount = this.amount;
   }
-  
+
   // Set fiscal year
   const fiscalYear = this.transactionDate.getFullYear();
   const month = this.transactionDate.getMonth() + 1;
@@ -583,41 +549,36 @@ transactionSchema.pre('save', async function(next) {
   } else {
     this.metadata.fiscalYear = `${fiscalYear - 1}-${fiscalYear}`;
   }
-  
+
   // Set quarter
   if (month >= 4 && month <= 6) this.metadata.quarter = 1;
   else if (month >= 7 && month <= 9) this.metadata.quarter = 2;
   else if (month >= 10 && month <= 12) this.metadata.quarter = 3;
   else this.metadata.quarter = 4;
-  
+
   // Set financial month
   this.metadata.financialMonth = month >= 4 ? month - 3 : month + 9;
-  
+
   next();
 });
 
 // ============================================
-// Static Methods - কমন queries
+// Static Methods
 // ============================================
 
-// আজকের transactions
 transactionSchema.statics.findTodayTransactions = function(stallId = null) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
   const query = {
     transactionDate: { $gte: today },
     transactionStatus: 'active'
   };
-  
   if (stallId) {
     query['location.stallId'] = stallId;
   }
-  
   return this.find(query).sort({ transactionDate: -1 });
 };
 
-// তারিখ অনুযায়ী
 transactionSchema.statics.findByDateRange = function(startDate, endDate, filters = {}) {
   const query = {
     transactionDate: {
@@ -627,11 +588,9 @@ transactionSchema.statics.findByDateRange = function(startDate, endDate, filters
     transactionStatus: 'active',
     ...filters
   };
-  
   return this.find(query).sort({ transactionDate: -1 });
 };
 
-// Transaction type অনুযায়ী
 transactionSchema.statics.findByType = function(type, startDate, endDate) {
   return this.find({
     transactionType: type,
@@ -643,7 +602,6 @@ transactionSchema.statics.findByType = function(type, startDate, endDate) {
   }).sort({ transactionDate: -1 });
 };
 
-// Pending approvals
 transactionSchema.statics.findPendingApprovals = function() {
   return this.find({
     'approval.requiresApproval': true,
@@ -651,7 +609,6 @@ transactionSchema.statics.findPendingApprovals = function() {
   }).sort({ transactionDate: 1 });
 };
 
-// Party অনুযায়ী (paid by or received by)
 transactionSchema.statics.findByParty = function(partyId, startDate, endDate) {
   return this.find({
     $or: [
@@ -667,10 +624,9 @@ transactionSchema.statics.findByParty = function(partyId, startDate, endDate) {
 };
 
 // ============================================
-// Instance Methods - ডাটা ম্যানিপুলেশন
+// Instance Methods
 // ============================================
 
-// Transaction reverse করুন
 transactionSchema.methods.reverseTransaction = async function(userId, userName, userRole, reason) {
   // Create reversal entry
   const reversalTransaction = new this.constructor({
@@ -678,71 +634,70 @@ transactionSchema.methods.reverseTransaction = async function(userId, userName, 
     transactionCategory: this.transactionCategory,
     amount: this.amount,
     currency: this.currency,
-    
     relatedEntity: this.relatedEntity,
-    
     payment: {
       ...this.payment,
       paymentReference: `REVERSAL-${this.transactionId}`
     },
-    
-    // Swap paid by and received by
     paidBy: this.receivedBy,
     receivedBy: this.paidBy,
-    
     location: this.location,
-    
     transactionDescription: `Reversal of ${this.transactionId} - ${reason}`,
     remarks: `Original transaction reversed`,
-    
     adjustment: {
       isAdjustment: true,
       adjustmentReason: 'reversal',
       adjustmentRemarks: reason,
       linkedOriginalTransaction: this._id
     },
-    
     transactionDate: new Date(),
-    
     recordedBy: {
       userId,
       userName,
-      userRole
+      userRole: userRole.toLowerCase() // 🔥 Ensure lowercase
     }
   });
-  
+
   await reversalTransaction.save();
-  
+
   // Update original transaction
   this.transactionStatus = 'reversed';
   this.reversalDetails = {
     isReversed: true,
     reversedAt: new Date(),
-    reversedBy: { userId, userName, userRole },
+    reversedBy: { 
+      userId, 
+      userName, 
+      userRole: userRole.toLowerCase() // 🔥 Ensure lowercase
+    },
     reversalReason: reason,
     reversalTransactionId: reversalTransaction._id
   };
-  
+
   return await this.save();
 };
 
-// Approve transaction
 transactionSchema.methods.approveTransaction = async function(userId, userName, userRole) {
   this.approval.approvalStatus = 'approved';
-  this.approval.approvedBy = { userId, userName, userRole };
+  this.approval.approvedBy = { 
+    userId, 
+    userName, 
+    userRole: userRole.toLowerCase() // 🔥 Ensure lowercase
+  };
   this.approval.approvedAt = new Date();
-  
   return await this.save();
 };
 
-// Reject transaction
 transactionSchema.methods.rejectTransaction = async function(userId, userName, userRole, reason) {
   this.approval.approvalStatus = 'rejected';
-  this.approval.approvedBy = { userId, userName, userRole };
+  this.approval.approvedBy = { 
+    userId, 
+    userName, 
+    userRole: userRole.toLowerCase() // 🔥 Ensure lowercase
+  };
   this.approval.approvedAt = new Date();
   this.approval.rejectionReason = reason;
   this.transactionStatus = 'cancelled';
-  
   return await this.save();
 };
 
